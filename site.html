@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vietugram — Мессенджер нового поколения · by Vietu</title>
+  <meta name="description" content="Vietugram — современный веб-мессенджер с голосовыми чатами, ролями, ботами и многим другим. Разработчик: Vietu." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #10101a;
+      --bg3: #16162a;
+      --card: #12121e;
+      --border: rgba(120,90,255,0.18);
+      --accent: #7c5cfc;
+      --accent2: #a78bfa;
+      --accent3: #c4b5fd;
+      --green: #22d3a5;
+      --red: #ff4f6d;
+      --yellow: #fbbf24;
+      --text: #e8e8f0;
+      --text2: #9090b0;
+      --text3: #5a5a80;
+      --glow: 0 0 40px rgba(124,92,252,0.25);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated BG ── */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+    .bg-orb {
+      position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0;
+    }
+    .orb1 { width: 600px; height: 600px; background: rgba(124,92,252,0.12); top: -200px; left: -200px; animation: floatOrb 14s ease-in-out infinite; }
+    .orb2 { width: 400px; height: 400px; background: rgba(34,211,165,0.08); bottom: -100px; right: -100px; animation: floatOrb 18s ease-in-out infinite reverse; }
+    .orb3 { width: 300px; height: 300px; background: rgba(255,79,109,0.07); top: 40%; left: 50%; animation: floatOrb 20s ease-in-out infinite 5s; }
+    @keyframes floatOrb {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(40px,-30px) scale(1.05); }
+      66% { transform: translate(-20px,40px) scale(0.95); }
+    }
+
+    /* ── Layout ── */
+    .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      max-width: 1100px; margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #7c5cfc, #22d3a5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 0 18px rgba(124,92,252,0.5);
+    }
+    .logo-text { background: linear-gradient(135deg, #a78bfa, #22d3a5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-by { font-size: 0.65rem; color: var(--text3); font-weight: 400; letter-spacing: 1px; margin-top: 2px; }
+    nav { display: flex; gap: 8px; align-items: center; }
+    .nav-link {
+      color: var(--text2); font-size: 0.85rem; font-weight: 500;
+      padding: 7px 14px; border-radius: 8px; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(124,92,252,0.12); }
+    .nav-btn {
+      background: linear-gradient(135deg, #7c5cfc, #5b3de8);
+      color: #fff; font-size: 0.85rem; font-weight: 600;
+      padding: 8px 18px; border-radius: 10px; text-decoration: none;
+      transition: all 0.2s; box-shadow: 0 0 20px rgba(124,92,252,0.35);
+      border: none; cursor: pointer;
+    }
+    .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(124,92,252,0.55); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 100px 0 70px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(124,92,252,0.12); border: 1px solid rgba(124,92,252,0.3);
+      border-radius: 50px; padding: 6px 16px; margin-bottom: 28px;
+      font-size: 0.78rem; font-weight: 600; color: var(--accent2);
+      letter-spacing: 0.5px;
+    }
+    .hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,211,165,0.4); } 50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34,211,165,0); } }
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900; line-height: 1.06; letter-spacing: -2px;
+      margin-bottom: 22px;
+    }
+    .h1-gradient {
+      background: linear-gradient(135deg, #a78bfa 0%, #7c5cfc 40%, #22d3a5 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 1.15rem; color: var(--text2); max-width: 580px;
+      margin: 0 auto 44px; line-height: 1.65; font-weight: 400;
+    }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: linear-gradient(135deg, #7c5cfc, #5b3de8);
+      color: #fff; font-size: 1rem; font-weight: 700;
+      padding: 14px 30px; border-radius: 14px; text-decoration: none;
+      transition: all 0.25s; box-shadow: 0 0 30px rgba(124,92,252,0.4);
+      border: none; cursor: pointer; letter-spacing: -0.2px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(124,92,252,0.6); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      font-size: 1rem; font-weight: 600; padding: 14px 30px;
+      border-radius: 14px; text-decoration: none; border: 1px solid var(--border);
+      transition: all 0.25s; cursor: pointer;
+    }
+    .btn-secondary:hover { background: rgba(124,92,252,0.12); border-color: rgba(124,92,252,0.4); transform: translateY(-2px); }
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: linear-gradient(135deg, #22d3a5, #0fa87e);
+      color: #fff; font-size: 1rem; font-weight: 700;
+      padding: 14px 30px; border-radius: 14px; text-decoration: none;
+      transition: all 0.25s; box-shadow: 0 0 30px rgba(34,211,165,0.35);
+      border: none; cursor: pointer;
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(34,211,165,0.55); }
+
+    /* ── DOWNLOAD CARD ── */
+    .download-section { padding: 30px 0 80px; }
+    .download-card {
+      background: linear-gradient(135deg, rgba(34,211,165,0.08), rgba(124,92,252,0.08));
+      border: 1px solid rgba(34,211,165,0.25);
+      border-radius: 24px; padding: 42px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 30px; flex-wrap: wrap;
+    }
+    .download-card-left { flex: 1; min-width: 260px; }
+    .download-card-left h2 {
+      font-size: 1.6rem; font-weight: 800; margin-bottom: 10px;
+    }
+    .download-card-left p { color: var(--text2); line-height: 1.6; font-size: 0.95rem; }
+    .download-meta {
+      display: flex; gap: 20px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .download-meta-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.8rem; color: var(--text3); font-weight: 500;
+    }
+    .download-meta-item .ico { font-size: 0.95rem; }
+    .download-card-right { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+    .version-badge {
+      background: rgba(34,211,165,0.15); border: 1px solid rgba(34,211,165,0.3);
+      color: var(--green); border-radius: 8px; padding: 4px 12px;
+      font-size: 0.78rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+    .download-instructions {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px; margin-top: 20px;
+    }
+    .download-instructions h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; color: var(--accent2); }
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 14px;
+      font-size: 0.88rem; color: var(--text2); line-height: 1.5;
+    }
+    .step-num {
+      min-width: 24px; height: 24px; border-radius: 6px;
+      background: rgba(124,92,252,0.2); border: 1px solid rgba(124,92,252,0.35);
+      color: var(--accent2); font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(124,92,252,0.12); color: var(--accent3);
+      padding: 2px 7px; border-radius: 5px; font-size: 0.82em;
+    }
+
+    /* ── FEATURES GRID ── */
+    .section { padding: 70px 0; }
+    .section-tag {
+      display: inline-block; background: rgba(124,92,252,0.12);
+      border: 1px solid rgba(124,92,252,0.25); color: var(--accent2);
+      border-radius: 50px; padding: 5px 14px;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; letter-spacing: -1px; margin-bottom: 14px;
+    }
+    .section-sub { color: var(--text2); font-size: 1rem; max-width: 520px; line-height: 1.65; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px; margin-top: 44px;
+    }
+    .feature-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 26px 24px;
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(124,92,252,0.05), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(124,92,252,0.4); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3), var(--glow); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(124,92,252,0.15); border: 1px solid rgba(124,92,252,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; margin-bottom: 16px;
+    }
+    .feature-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 0.84rem; color: var(--text2); line-height: 1.6; }
+    .feature-card.green .feature-icon { background: rgba(34,211,165,0.12); border-color: rgba(34,211,165,0.25); }
+    .feature-card.red .feature-icon { background: rgba(255,79,109,0.12); border-color: rgba(255,79,109,0.25); }
+    .feature-card.yellow .feature-icon { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.25); }
+
+    /* ── ROLES ── */
+    .roles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 40px; }
+    .role-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px 18px; text-align: center;
+      transition: all 0.25s;
+    }
+    .role-card:hover { transform: translateY(-3px); }
+    .role-emoji { font-size: 2rem; margin-bottom: 8px; }
+    .role-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .role-desc { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+    .role-card.admin { border-color: rgba(255,79,109,0.3); background: rgba(255,79,109,0.05); }
+    .role-card.admin .role-name { color: #ff7090; }
+    .role-card.mod { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05); }
+    .role-card.mod .role-name { color: var(--yellow); }
+    .role-card.vet { border-color: rgba(34,211,165,0.3); background: rgba(34,211,165,0.05); }
+    .role-card.vet .role-name { color: var(--green); }
+    .role-card.user { border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.05); }
+    .role-card.user .role-name { color: var(--accent2); }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: flex; gap: 18px; flex-wrap: wrap; margin-top: 50px;
+    }
+    .stat-card {
+      flex: 1; min-width: 160px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 18px;
+      padding: 24px 22px; text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem; font-weight: 900; letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--accent2), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--text3); font-weight: 500; margin-top: 4px; }
+
+    /* ── CHAT PREVIEW ── */
+    .chat-preview {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden; margin-top: 44px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    }
+    .chat-topbar {
+      background: rgba(124,92,252,0.08); border-bottom: 1px solid var(--border);
+      padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+    }
+    .chat-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .chat-dot.r { background: #ff4f6d; } .chat-dot.y { background: #fbbf24; } .chat-dot.g { background: #22d3a5; }
+    .chat-room-name { font-size: 0.9rem; font-weight: 600; margin-left: 8px; color: var(--accent2); }
+    .chat-members-count { font-size: 0.75rem; color: var(--text3); margin-left: 4px; }
+    .chat-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+    .chat-avatar {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;
+    }
+    .av-admin { background: rgba(255,79,109,0.2); color: #ff7090; border: 1px solid rgba(255,79,109,0.3); }
+    .av-mod { background: rgba(251,191,36,0.2); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+    .av-user { background: rgba(124,92,252,0.2); color: var(--accent2); border: 1px solid rgba(124,92,252,0.3); }
+    .chat-msg-body { flex: 1; }
+    .chat-msg-author { font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .badge-admin { background: rgba(255,79,109,0.2); color: #ff7090; padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; }
+    .badge-mod { background: rgba(251,191,36,0.2); color: var(--yellow); padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; }
+    .badge-bot { background: rgba(34,211,165,0.2); color: var(--green); padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; }
+    .chat-msg-text { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+    .chat-msg-text .mention { color: var(--accent2); font-weight: 600; }
+    .chat-msg.announcement {
+      background: rgba(124,92,252,0.08); border: 1px solid rgba(124,92,252,0.2);
+      border-radius: 12px; padding: 10px 14px;
+    }
+    .chat-msg.announcement .chat-msg-text { color: var(--accent3); }
+
+    /* ── TECH STACK ── */
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .tech-pill {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 50px; padding: 7px 16px;
+      font-size: 0.8rem; font-weight: 600; color: var(--text2);
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .tech-pill:hover { border-color: rgba(124,92,252,0.4); color: var(--accent2); }
+
+    /* ── WHY VIETUGRAM ── */
+    .why-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 40px; }
+    .why-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 26px 24px;
+      display: flex; gap: 16px; align-items: flex-start;
+      transition: all 0.25s;
+    }
+    .why-card:hover { border-color: rgba(124,92,252,0.35); transform: translateY(-2px); }
+    .why-icon {
+      font-size: 1.6rem; min-width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .why-card-body h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .why-card-body p { font-size: 0.83rem; color: var(--text2); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0; text-align: center;
+    }
+    .footer-logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+    .footer-logo span { background: linear-gradient(135deg, #a78bfa, #22d3a5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .footer-sub { font-size: 0.82rem; color: var(--text3); margin-bottom: 20px; }
+    .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .footer-link { color: var(--text3); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
+    .footer-link:hover { color: var(--accent2); }
+    .footer-copy { margin-top: 24px; font-size: 0.75rem; color: var(--text3); }
+
+    /* ── Notification toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      background: rgba(22,22,42,0.95); border: 1px solid rgba(34,211,165,0.4);
+      border-radius: 14px; padding: 14px 20px;
+      color: var(--green); font-size: 0.88rem; font-weight: 600;
+      box-shadow: 0 0 30px rgba(34,211,165,0.2);
+      display: flex; align-items: center; gap: 10px;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── EXE Download Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      padding: 20px;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 24px; padding: 36px 34px; max-width: 540px; width: 100%;
+      transform: translateY(30px) scale(0.97); transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+    .modal-box h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+    .modal-box p { font-size: 0.88rem; color: var(--text2); margin-bottom: 22px; line-height: 1.65; }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px; font-size: 1.2rem;
+      cursor: pointer; color: var(--text3); transition: color 0.2s;
+      background: none; border: none;
+    }
+    .modal-close:hover { color: var(--text); }
+    .code-block {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; color: var(--accent3); line-height: 1.7;
+      overflow-x: auto; margin-bottom: 14px; white-space: pre;
+    }
+    .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--text3); font-size: 0.72rem; letter-spacing: 1px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
+    .hero-wrapper { position: relative; }
+
+    /* anchor for nav */
+    .section-anchor { scroll-margin-top: 80px; }
+
+    @media (max-width: 640px) {
+      .download-card { flex-direction: column; }
+      .download-card-right { align-items: flex-start; }
+      .header-inner nav .nav-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- BG effects -->
+<div class="bg-grid"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <div class="logo-text">Vietugram</div>
+        <div class="logo-by">by Vietu</div>
+      </div>
+    </div>
+    <nav>
+      <a class="nav-link" href="#features">Функции</a>
+      <a class="nav-link" href="#roles">Роли</a>
+      <a class="nav-link" href="#why">Почему мы</a>
+      <a class="nav-link" href="#download">Скачать</a>
+      <a class="nav-btn" href="#open-app" id="openAppBtn">🚀 Открыть</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero-wrapper">
+  <div class="wrapper">
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Версия 3.0 · Активно разрабатывается
+      </div>
+      <h1>
+        Мессенджер<br />
+        <span class="h1-gradient">нового поколения</span>
+      </h1>
+      <p class="hero-sub">
+        Vietugram — это мощный веб-чат с голосовыми комнатами WebRTC, системой ролей,
+        ботами, шифрованием и всем необходимым для живого общения.
+        Разработан Vietu с любовью к деталям.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-download" onclick="openDownloadModal()">
+          ⬇️ Скачать .EXE
+        </button>
+        <a class="btn-primary" href="#open-app" id="openAppBtnHero">
+          🌐 Открыть приложение
+        </a>
+        <a class="btn-secondary" href="#features">
+          📋 Все функции
+        </a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- CHAT PREVIEW -->
+<div class="wrapper" id="features" style="padding-bottom: 20px;">
+  <div class="chat-preview">
+    <div class="chat-topbar">
+      <div class="chat-dot r"></div>
+      <div class="chat-dot y"></div>
+      <div class="chat-dot g"></div>
+      <span class="chat-room-name">💬 Главный чат</span>
+      <span class="chat-members-count">· 4 онлайн</span>
+    </div>
+    <div class="chat-body">
+      <div class="chat-msg">
+        <div class="chat-avatar av-admin">V</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-author" style="color:#ff7090">
+            Vietu <span class="badge-admin">ADMIN</span> 👑
+            <span style="font-size:0.68rem;color:var(--text3);margin-left:4px">09:41</span>
+          </div>
+          <div class="chat-msg-text">Добро пожаловать в Vietugram v3.0! Голосовые чаты, боты, кастомные роли — всё уже доступно! 🎉</div>
+        </div>
+      </div>
+      <div class="chat-msg announcement">
+        <div class="chat-avatar av-mod">M</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-author" style="color:var(--yellow)">
+            Moder_One <span class="badge-mod">MOD</span> 🛡️
+            <span style="font-size:0.68rem;color:var(--text3);margin-left:4px">09:43</span>
+          </div>
+          <div class="chat-msg-text">📢 <b>Объявление:</b> Сегодня проводим тест голосовых комнат в 20:00. Присоединяйтесь!</div>
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar av-user">A</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-author" style="color:var(--accent2)">
+            Alex
+            <span style="font-size:0.68rem;color:var(--text3);margin-left:4px">09:44</span>
+          </div>
+          <div class="chat-msg-text">Классно! <span class="mention">@Moder_One</span> буду там 👍 Кстати, как создать голосовую комнату?</div>
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar" style="background:rgba(34,211,165,0.15);color:var(--green);border:1px solid rgba(34,211,165,0.3);">🤖</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-author" style="color:var(--green)">
+            EchoBot <span class="badge-bot">BOT</span>
+            <span style="font-size:0.68rem;color:var(--text3);margin-left:4px">09:44</span>
+          </div>
+          <div class="chat-msg-text">👋 Привет, Alex! Для создания голосовой комнаты нажмите <b>+ Создать комнату</b> и включите ползунок 🎙️</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="wrapper">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number">30+</div>
+      <div class="stat-label">Функций</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Системы ролей</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">WebRTC</div>
+      <div class="stat-label">Голосовые чаты</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">API</div>
+      <div class="stat-label">Поддержка ботов</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">v3.0</div>
+      <div class="stat-label">Текущая версия</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section section-anchor" id="features-section">
+  <div class="wrapper">
+    <div class="section-tag">⚡ Возможности</div>
+    <h2 class="section-title">Всё, что нужно<br />для общения</h2>
+    <p class="section-sub">Vietugram сочетает в себе мощность профессиональных мессенджеров с простотой использования.</p>
+
+    <div class="features-grid">
+      <div class="feature-card green">
+        <div class="feature-icon">🎙️</div>
+        <div class="feature-title">WebRTC Голосовые чаты</div>
+        <div class="feature-desc">Реальное голосовое общение прямо в браузере. Управление микрофоном, звуком, трансляция экрана с отдельным окном просмотра.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">Текстовые чаты</div>
+        <div class="feature-desc">Мгновенный обмен сообщениями, прикрепление изображений, Drag &amp; Drop файлов, редактирование отправленных сообщений.</div>
+      </div>
+      <div class="feature-card red">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">Защищённые комнаты</div>
+        <div class="feature-desc">Защита паролем, анонимные комнаты со скрытыми никами, временные комнаты с таймером самоуничтожения.</div>
+      </div>
+      <div class="feature-card yellow">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">Bot API</div>
+        <div class="feature-desc">Подключайте Python-ботов через HTTP API. Каждый бот получает отдельную комнату с особым оформлением.</div>
+      </div>
+      <div class="feature-card green">
+        <div class="feature-icon">📌</div>
+        <div class="feature-title">Закрепление сообщений</div>
+        <div class="feature-desc">Важные сообщения закрепляются вверху чата. Быстрый переход к закреплённому сообщению по клику.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">@</div>
+        <div class="feature-title">Упоминания и теги</div>
+        <div class="feature-desc">@username с уведомлением пользователя. Теги #важное #срочно #todo для категоризации сообщений.</div>
+      </div>
+      <div class="feature-card red">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Таблица лидеров</div>
+        <div class="feature-desc">Рейтинг по сообщениям, полученным реакциям и времени в чате. Автоматический статус «Ветеран» после 1000 сообщений.</div>
+      </div>
+      <div class="feature-card yellow">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-title">Кастомные роли</div>
+        <div class="feature-desc">Создавайте уникальные роли с кастомным цветом ника, статус-эмодзи и префиксом. Назначайте любым пользователям.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👁️</div>
+        <div class="feature-title">Режим Наблюдателя</div>
+        <div class="feature-desc">Администраторы могут активировать режим невидимки — видеть все чаты, не оставляя следов присутствия.</div>
+      </div>
+      <div class="feature-card green">
+        <div class="feature-icon">🐍</div>
+        <div class="feature-title">Python Мини-приложения</div>
+        <div class="feature-desc">Встраивайте Python-скрипты прямо в интерфейс. Запускайте во всплывающем окне как приложения в Telegram.</div>
+      </div>
+      <div class="feature-card red">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-title">Защита от спама</div>
+        <div class="feature-desc">Владелец комнаты может настроить задержку отправки сообщений для каждого пользователя.</div>
+      </div>
+      <div class="feature-card yellow">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Поиск по автору</div>
+        <div class="feature-desc">Быстрый поиск всех сообщений конкретного пользователя внутри комнаты.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section class="section section-anchor" id="roles">
+  <div class="wrapper">
+    <div class="section-tag">👥 Система ролей</div>
+    <h2 class="section-title">4 уровня доступа</h2>
+    <p class="section-sub">Продуманная иерархия прав с возможностью создавать неограниченное количество кастомных ролей.</p>
+    <div class="roles-grid">
+      <div class="role-card admin">
+        <div class="role-emoji">👑</div>
+        <div class="role-name">Администратор</div>
+        <div class="role-desc">Полный доступ. Баны, назначения, кастомные сообщения, режим наблюдателя, вход без пароля.</div>
+      </div>
+      <div class="role-card mod">
+        <div class="role-emoji">🛡️</div>
+        <div class="role-name">Модератор</div>
+        <div class="role-desc">Удаление комнат и сообщений, кик пользователей, объявления, кастомные роли.</div>
+      </div>
+      <div class="role-card vet">
+        <div class="role-emoji">🏆</div>
+        <div class="role-name">Ветеран</div>
+        <div class="role-desc">Автоматически после 1000 сообщений. Зелёный ник и особый статус.</div>
+      </div>
+      <div class="role-card user">
+        <div class="role-emoji">👤</div>
+        <div class="role-name">Пользователь</div>
+        <div class="role-desc">Базовая роль. Создание комнат, чат, изображения, реакции, упоминания.</div>
+      </div>
+      <div class="role-card" style="border-color:rgba(34,211,165,0.3);background:rgba(34,211,165,0.05);">
+        <div class="role-emoji">🏠</div>
+        <div class="role-name" style="color:var(--green)">Владелец</div>
+        <div class="role-desc">Создатель комнаты: удаление, закрепление, кик пользователей, защита от спама.</div>
+      </div>
+      <div class="role-card" style="border-color:rgba(196,181,253,0.3);background:rgba(196,181,253,0.05);">
+        <div class="role-emoji">🎨</div>
+        <div class="role-name" style="color:var(--accent3)">Кастомная</div>
+        <div class="role-desc">Создайте свои роли: название, цвет ника, эмодзи-статус, префикс. Назначайте кому угодно.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY VIETUGRAM -->
+<section class="section section-anchor" id="why">
+  <div class="wrapper">
+    <div class="section-tag">💎 Почему Vietugram</div>
+    <h2 class="section-title">Лучший выбор<br />для вашего сообщества</h2>
+    <p class="section-sub">Мы создали Vietugram потому что верим: общение должно быть простым, красивым и мощным одновременно.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">⚡</div>
+        <div class="why-card-body">
+          <h4>Мгновенная синхронизация</h4>
+          <p>WebSocket соединение через Socket.IO обеспечивает мгновенную доставку сообщений без перезагрузки страницы. История чата сохраняется на сервере.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🎙️</div>
+        <div class="why-card-body">
+          <h4>Настоящие голосовые чаты</h4>
+          <p>WebRTC — технология, используемая в Google Meet и Discord. Прямое P2P соединение без промежуточных серверов, минимальная задержка.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🛡️</div>
+        <div class="why-card-body">
+          <h4>Надёжная система ролей</h4>
+          <p>Продуманная иерархия: Пользователь → Ветеран → Модератор → Администратор + неограниченное количество кастомных ролей.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🤖</div>
+        <div class="why-card-body">
+          <h4>Расширяемость через ботов</h4>
+          <p>Официальный Bot API на Python. Подключайте ботов, автоматизируйте задачи, создавайте интерактивные команды — возможности безграничны.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🎨</div>
+        <div class="why-card-body">
+          <h4>Красивый тёмный интерфейс</h4>
+          <p>Современный дизайн с тёмной темой, плавными анимациями и интуитивным UX. Каждая деталь продумана для комфортного использования.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🌐</div>
+        <div class="why-card-body">
+          <h4>Простой деплой</h4>
+          <p>Два файла: server.py и index.html. Запустите на своём сервере с белым IP или в Google Colab. Порт 5000, полная инструкция в README.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">📱</div>
+        <div class="why-card-body">
+          <h4>Работает везде</h4>
+          <p>Открывается в любом современном браузере — на ПК, планшете, смартфоне. Адаптивный дизайн для любого экрана.</p>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🔓</div>
+        <div class="why-card-body">
+          <h4>Открытый код</h4>
+          <p>Исходный код доступен на GitHub. Изучайте, модифицируйте, вносите улучшения. Разработчик Vietu открыт к вкладу сообщества.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech stack -->
+    <div style="margin-top: 50px;">
+      <div class="section-tag">🛠️ Технологии</div>
+      <div class="tech-stack" style="margin-top: 16px;">
+        <div class="tech-pill">🐍 Python 3</div>
+        <div class="tech-pill">🌶️ Flask</div>
+        <div class="tech-pill">⚡ Socket.IO</div>
+        <div class="tech-pill">🔄 Eventlet</div>
+        <div class="tech-pill">📡 WebRTC</div>
+        <div class="tech-pill">🎨 CSS3 / Vanilla JS</div>
+        <div class="tech-pill">🤖 Bot HTTP API</div>
+        <div class="tech-pill">🔐 SHA-256 Passwords</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD SECTION -->
+<section class="section section-anchor" id="download">
+  <div class="wrapper">
+    <div class="section-tag">⬇️ Скачать</div>
+    <h2 class="section-title">Запустите Vietugram<br />на своём сервере</h2>
+    <p class="section-sub">Скачайте готовый архив или EXE-установщик и разверните на любом сервере с белым IP.</p>
+
+    <div class="download-card" style="margin-top: 32px;">
+      <div class="download-card-left">
+        <h2>📦 Vietugram v3.0</h2>
+        <p>Полный пакет: server.py + index.html + README.md.<br />Готов к запуску на сервере с белым IP, Google Colab или локально.</p>
+        <div class="download-meta">
+          <div class="download-meta-item"><span class="ico">🐍</span> Python 3.8+</div>
+          <div class="download-meta-item"><span class="ico">💾</span> ~180 KB</div>
+          <div class="download-meta-item"><span class="ico">🪟</span> Windows / Linux / macOS</div>
+          <div class="download-meta-item"><span class="ico">⚡</span> Порт 5000</div>
+        </div>
+      </div>
+      <div class="download-card-right">
+        <div class="version-badge">v3.0 STABLE</div>
+        <button class="btn-download" onclick="openDownloadModal()">⬇️ Скачать EXE</button>
+        <a class="btn-secondary" href="https://github.com/PVietu/Vietugram" target="_blank" style="font-size:0.85rem;padding:10px 18px;">
+          🐙 GitHub
+        </a>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="download-instructions">
+      <h3>📋 Как загрузить EXE для скачивания на сервер</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>Положите <code>vietugram_setup.exe</code> в корневую папку проекта рядом с <code>server.py</code> и <code>index.html</code> на своём сервере.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>Чтобы файл отдавался по кнопке скачивания, добавьте в <code>server.py</code> маршрут:<br/>
+            <code>@app.route('/download') → send_from_directory('.', 'vietugram_setup.exe', as_attachment=True)</code>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>Либо разместите файл в папке <code>static/</code> и в <code>index.html</code> укажите ссылку: <code>&lt;a href="/static/vietugram_setup.exe"&gt;Скачать&lt;/a&gt;</code></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>Убедитесь что порт <code>5000</code> открыт в firewall вашего сервера: <code>sudo ufw allow 5000</code></div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div>Запустите сервер: <code>python server.py</code> — сайт доступен по <code>http://ВАШ_IP:5000</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code block -->
+    <div style="margin-top: 24px;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--accent2)">🖥️ Быстрый старт (сервер с белым IP)</h3>
+      <div class="code-block"># 1. Установка зависимостей
+pip install flask flask-socketio eventlet
+
+# 2. Запуск сервера
+python server.py
+
+# Сайт доступен:
+# Локально:       http://localhost:5000
+# По белому IP:   http://YOUR_IP:5000
+
+# 3. Открыть порт в firewall (Linux)
+sudo ufw allow 5000/tcp
+
+# 4. Постоянный запуск (фон)
+nohup python server.py &gt; vietugram.log 2&gt;&amp;1 &amp;</div>
+      <div class="code-block"># Google Colab
+!pip install flask flask-socketio eventlet pyngrok -q
+from pyngrok import ngrok
+import subprocess, threading, time
+t = threading.Thread(target=lambda: subprocess.run(['python','server.py'])); t.daemon=True; t.start()
+time.sleep(3)
+url = ngrok.connect(5000); print(f'🌐 Vietugram: {url}')</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrapper">
+    <div class="footer-logo">✦ <span>Vietugram</span></div>
+    <div class="footer-sub">Мессенджер нового поколения · Разработчик: Vietu · v3.0</div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/PVietu/Vietugram" target="_blank">🐙 GitHub</a>
+      <a class="footer-link" href="#features">Функции</a>
+      <a class="footer-link" href="#roles">Роли</a>
+      <a class="footer-link" href="#download">Скачать</a>
+      <a class="footer-link" href="#why">О нас</a>
+    </div>
+    <div class="footer-copy">© 2024–2025 Vietugram by Vietu. Все права защищены.</div>
+  </div>
+</footer>
+
+<!-- DOWNLOAD MODAL -->
+<div class="modal-overlay" id="downloadModal" onclick="closeDownloadModal(event)">
+  <div class="modal-box" style="position:relative;">
+    <button class="modal-close" onclick="closeDownloadModal()">✕</button>
+    <h2>⬇️ Скачать Vietugram</h2>
+    <p>
+      Для скачивания EXE-файла нажмите кнопку ниже. Файл содержит полный инсталлятор сервера Vietugram для Windows.
+      Для Linux/macOS используйте исходный код с GitHub.
+    </p>
+    <div class="code-block"># Что внутри архива:
+├── server.py      ← Python сервер (Flask + Socket.IO)
+├── index.html     ← Фронтенд (открывается в браузере)
+├── README.md      ← Полная документация
+└── requirements.txt ← Зависимости Python</div>
+    <div class="modal-actions">
+      <a class="btn-download" href="/download" id="exeDownloadLink">
+        ⬇️ Скачать vietugram_setup.exe
+      </a>
+      <a class="btn-secondary" href="https://github.com/PVietu/Vietugram" target="_blank">
+        🐙 Исходный код
+      </a>
+    </div>
+    <p style="margin-top: 14px; font-size: 0.75rem; color: var(--text3);">
+      ⚠️ Требуется Python 3.8+ · Размер: ~180 KB · Windows 10/11
+    </p>
+  </div>
+</div>
+
+<!-- OPEN APP MODAL -->
+<div class="modal-overlay" id="openAppModal" onclick="closeOpenApp(event)">
+  <div class="modal-box" style="position:relative;">
+    <button class="modal-close" onclick="closeOpenApp()">✕</button>
+    <h2>🚀 Открыть Vietugram</h2>
+    <p>
+      Vietugram — серверное приложение. Введите адрес вашего сервера чтобы перейти к нему, или запустите локально.
+    </p>
+    <div style="margin-bottom: 16px;">
+      <label style="font-size:0.82rem;color:var(--text2);margin-bottom:6px;display:block;">Адрес сервера:</label>
+      <input id="serverAddrInput"
+        style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;outline:none;"
+        placeholder="http://YOUR_IP:5000" value="http://localhost:5000" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="goToServer()">🌐 Перейти</button>
+      <button class="btn-secondary" onclick="closeOpenApp()">Отмена</button>
+    </div>
+    <p style="margin-top:14px;font-size:0.75rem;color:var(--text3);">
+      Если сервер запущен локально, используйте http://localhost:5000
+    </p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Ссылка скопирована!</div>
+
+<script>
+  // Open App buttons
+  document.getElementById('openAppBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('openAppModal').classList.add('open');
+  });
+  document.getElementById('openAppBtnHero').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('openAppModal').classList.add('open');
+  });
+
+  function goToServer() {
+    const addr = document.getElementById('serverAddrInput').value.trim();
+    if (addr) window.open(addr, '_blank');
+  }
+
+  function closeOpenApp(e) {
+    if (!e || e.target === document.getElementById('openAppModal')) {
+      document.getElementById('openAppModal').classList.remove('open');
+    }
+  }
+
+  function openDownloadModal() {
+    document.getElementById('downloadModal').classList.add('open');
+  }
+
+  function closeDownloadModal(e) {
+    if (!e || e.target === document.getElementById('downloadModal')) {
+      document.getElementById('downloadModal').classList.remove('open');
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // Keyboard ESC to close modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.getElementById('downloadModal').classList.remove('open');
+      document.getElementById('openAppModal').classList.remove('open');
+    }
+  });
+
+  // Animate stats on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .why-card, .role-card, .stat-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+
+  // Smooth nav highlight
+  const sections = document.querySelectorAll('.section-anchor');
+  const navLinks = document.querySelectorAll('.nav-link');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(l => {
+      l.style.color = '';
+      if (l.getAttribute('href') === '#' + current) l.style.color = 'var(--accent2)';
+    });
+  });
+</script>
+</body>
+</html>
