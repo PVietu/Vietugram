@@ -22,7 +22,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 
 # ─── Configuration ──────────────────────────────────────────────────────────────
 HOST = "0.0.0.0"      # Use 0.0.0.0 for public server (white IP)
-PORT = 5001            # Change port if needed
+PORT = 5000            # Change port if needed
 ADMIN_CODE = "GGCheck"
 VETERAN_MSG_THRESHOLD = 1000
 
