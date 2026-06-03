@@ -1,0 +1,2966 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vietugram — Мессенджер нового поколения · by Vietu</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+/* ── VARIABLES & RESET ── */
+:root {
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e28;
+  --bg4: #212636;
+  --border: #2a2f42;
+  --border2: #353b52;
+  --accent: #6c63ff;
+  --accent2: #8b85ff;
+  --accent3: #4f46e5;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --gold: #f59e0b;
+  --mod: #22c55e;
+  --admin: #ef4444;
+  --owner: #a78bfa;
+  --veteran: #06b6d4;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow2: 0 8px 40px rgba(108,99,255,0.15);
+  --radius: 12px;
+  --radius2: 8px;
+  --trans: 0.2s ease;
+  --glow: 0 0 20px rgba(108,99,255,0.3);
+}
+[data-theme="light"] {
+  --bg: #f0f2f8;
+  --bg2: #ffffff;
+  --bg3: #f8fafc;
+  --bg4: #e2e8f0;
+  --border: #cbd5e1;
+  --border2: #94a3b8;
+  --text: #1e293b;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+  --shadow2: 0 8px 40px rgba(108,99,255,0.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+input,textarea,select{background:var(--bg3);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius2);padding:10px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color var(--trans)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.15)}
+button{cursor:pointer;font-family:inherit;transition:all var(--trans)}
+a{color:var(--accent2);text-decoration:none}
+
+/* ── AUTH OVERLAY ── */
+#auth-overlay {
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;animation:fadeIn 0.4s ease;
+}
+.auth-box {
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:20px;padding:40px;width:380px;max-width:95vw;
+  box-shadow:var(--shadow),var(--shadow2);
+  animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.auth-logo {
+  text-align:center;margin-bottom:30px;
+}
+.auth-logo .logo-icon {
+  width:64px;height:64px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:18px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:30px;margin-bottom:12px;box-shadow:var(--glow);
+}
+.auth-logo h1{font-size:24px;font-weight:700;letter-spacing:-0.5px}
+.auth-logo p{color:var(--text2);font-size:13px;margin-top:4px}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:24px;gap:3px}
+.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--text2);border-radius:8px;font-size:14px;font-weight:500}
+.auth-tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(108,99,255,0.4)}
+.auth-field{margin-bottom:16px}
+.auth-field label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.auth-field input{width:100%}
+.auth-err{color:var(--danger);font-size:13px;margin-top:8px;display:none}
+.auth-submit{
+  width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;margin-top:8px;
+  box-shadow:0 4px 15px rgba(108,99,255,0.4);
+}
+.auth-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,0.5)}
+.auth-submit:active{transform:translateY(0)}
+
+/* ── MAIN LAYOUT ── */
+#app{display:flex;height:100vh;flex-direction:column;overflow:hidden}
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:var(--bg2);border-bottom:1.5px solid var(--border);
+  flex-shrink:0;z-index:10;
+}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-0.3px}
+.topbar-logo .logo-mark{
+  width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;
+  box-shadow:0 2px 8px rgba(108,99,255,0.4);
+}
+.topbar-sep{width:1.5px;height:24px;background:var(--border);margin:0 4px}
+.topbar-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius2);
+  background:transparent;color:var(--text2);font-size:13px;
+}
+.topbar-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.topbar-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.topbar-spacer{flex:1}
+.user-badge{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:10px;padding:6px 12px;
+}
+.user-avatar{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;
+  overflow:hidden;
+}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:13px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-role-badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+
+/* ── MAIN CONTENT ── */
+.main-content{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:280px;min-width:230px;background:var(--bg2);border-right:1.5px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;
+}
+.sidebar-header{padding:14px 14px 10px}
+.sidebar-search{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;
+  padding:8px 12px;
+}
+.sidebar-search input{background:none;border:none;flex:1;font-size:13px;padding:0}
+.sidebar-search input:focus{box-shadow:none}
+.sidebar-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 14px;
+}
+.sidebar-action-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+  background:transparent;color:var(--text2);font-size:12px;
+}
+.sidebar-action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sidebar-action-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sidebar-action-btn.primary:hover{background:var(--accent3);border-color:var(--accent3)}
+.rooms-list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.rooms-section-label{
+  font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;
+  letter-spacing:0.5px;padding:8px 6px 4px;
+}
+.room-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 10px;border-radius:10px;cursor:pointer;
+  transition:all var(--trans);position:relative;margin-bottom:2px;
+}
+.room-card:hover{background:var(--bg3)}
+.room-card.active{background:var(--bg3);border-left:3px solid var(--accent)}
+.room-card.pinned{border:1.5px solid var(--gold);background:rgba(245,158,11,0.05)}
+.room-icon{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;
+  background:var(--bg4);
+}
+.room-info{flex:1;min-width:0}
+.room-name{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room-meta{display:flex;align-items:center;gap:5px;margin-top:2px}
+.room-meta span{font-size:11px;color:var(--text3)}
+.room-badge{
+  background:var(--accent);color:#fff;font-size:10px;font-weight:700;
+  min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  padding:0 5px;margin-left:auto;
+}
+.unread-badge{background:var(--danger)}
+
+/* ── CHAT AREA ── */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.chat-welcome{
+  flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  color:var(--text3);
+}
+.chat-welcome .w-icon{font-size:64px;opacity:0.3}
+.chat-welcome h2{font-size:20px;font-weight:600;color:var(--text2)}
+.chat-welcome p{font-size:14px}
+
+.chat-header{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;background:var(--bg2);border-bottom:1.5px solid var(--border);flex-shrink:0;
+}
+.chat-header-icon{
+  width:36px;height:36px;border-radius:10px;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+.chat-header-info h3{font-size:15px;font-weight:600}
+.chat-header-info p{font-size:12px;color:var(--text2)}
+.chat-header-actions{margin-left:auto;display:flex;gap:6px}
+.icon-btn{
+  width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;
+  background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+}
+.icon-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.icon-btn.danger:hover{background:rgba(239,68,68,0.1);color:var(--danger);border-color:var(--danger)}
+
+/* pinned bar */
+.pinned-bar{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  background:rgba(108,99,255,0.08);border-bottom:1.5px solid rgba(108,99,255,0.2);
+  font-size:13px;cursor:pointer;
+}
+.pinned-bar:hover{background:rgba(108,99,255,0.12)}
+.pinned-bar .pin-icon{color:var(--accent)}
+
+/* announcement bar */
+.announcement-bar{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  background:rgba(245,158,11,0.08);border-bottom:1.5px solid rgba(245,158,11,0.2);
+  font-size:13px;
+}
+
+/* messages */
+.messages-area{flex:1;overflow-y:auto;padding:16px}
+.msg-group{margin-bottom:4px}
+.msg-row{
+  display:flex;align-items:flex-start;gap:10px;padding:5px 8px;
+  border-radius:10px;transition:background var(--trans);position:relative;
+}
+.msg-row:hover{background:var(--bg3)}
+.msg-row:hover .msg-actions{opacity:1}
+.msg-avatar{
+  width:34px;height:34px;border-radius:8px;flex-shrink:0;margin-top:1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;
+  overflow:hidden;
+}
+.msg-avatar img{width:100%;height:100%;object-fit:cover}
+.msg-body{flex:1;min-width:0}
+.msg-header{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
+.msg-author{font-size:14px;font-weight:600}
+.msg-time{font-size:11px;color:var(--text3)}
+.msg-edited{font-size:11px;color:var(--text3);font-style:italic}
+.msg-text{font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap}
+.msg-text a{color:var(--accent2)}
+.msg-img{max-width:360px;max-height:300px;border-radius:10px;margin-top:6px;cursor:zoom-in;display:block}
+.msg-actions{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  display:flex;gap:4px;opacity:0;transition:opacity var(--trans);
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;padding:3px;
+}
+.msg-action-btn{
+  width:26px;height:26px;border:none;border-radius:6px;
+  background:transparent;color:var(--text2);font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+}
+.msg-action-btn:hover{background:var(--bg4);color:var(--text)}
+.msg-action-btn.danger:hover{background:rgba(239,68,68,0.15);color:var(--danger)}
+.msg-deleted{color:var(--text3);font-style:italic;font-size:13px}
+.msg-announcement{
+  background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.3);
+  border-radius:10px;padding:10px 14px;margin:8px 0;
+}
+.msg-announcement .ann-label{
+  font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+}
+.msg-tags{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+.msg-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+.msg-tag.important{background:rgba(239,68,68,0.15);color:var(--danger)}
+.msg-tag.urgent{background:rgba(245,158,11,0.15);color:var(--warning)}
+.msg-tag.todo{background:rgba(34,197,94,0.15);color:var(--success)}
+.reactions-bar{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.reaction-btn{
+  display:flex;align-items:center;gap:3px;padding:3px 7px;
+  border:1.5px solid var(--border);border-radius:20px;background:var(--bg3);font-size:13px;
+}
+.reaction-btn:hover{border-color:var(--accent);background:rgba(108,99,255,0.1)}
+.reaction-btn.mine{border-color:var(--accent);background:rgba(108,99,255,0.15);color:var(--accent)}
+.reaction-btn .cnt{font-size:12px;color:var(--text2)}
+.mention-highlight{color:var(--accent2);font-weight:600}
+.system-msg{
+  text-align:center;font-size:12px;color:var(--text3);padding:6px 0;
+}
+.msg-mention{background:rgba(108,99,255,0.08)}
+
+/* input area */
+.input-area{
+  padding:12px 14px;background:var(--bg2);border-top:1.5px solid var(--border);flex-shrink:0;
+}
+.image-preview-bar{
+  display:flex;align-items:center;gap:10px;margin-bottom:8px;
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;
+}
+.image-preview-bar img{height:48px;border-radius:6px;object-fit:cover}
+.img-preview-info{flex:1;font-size:13px;color:var(--text2)}
+.img-preview-remove{
+  width:24px;height:24px;border:none;border-radius:6px;
+  background:rgba(239,68,68,0.1);color:var(--danger);font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+}
+.input-row{display:flex;align-items:flex-end;gap:8px}
+.input-box{
+  flex:1;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;
+  padding:10px 14px;font-size:14px;resize:none;min-height:42px;max-height:120px;
+  font-family:inherit;color:var(--text);line-height:1.4;
+}
+.input-box:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.15)}
+.input-tools{display:flex;gap:5px;align-items:flex-end}
+.input-tool-btn{
+  width:38px;height:38px;border:1.5px solid var(--border);border-radius:10px;
+  background:transparent;color:var(--text2);font-size:16px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.input-tool-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.input-tool-btn.send{background:var(--accent);color:#fff;border-color:var(--accent)}
+.input-tool-btn.send:hover{background:var(--accent3);border-color:var(--accent3)}
+.tag-dropdown{
+  position:absolute;bottom:100%;left:0;right:0;
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow);overflow:hidden;margin-bottom:4px;z-index:50;display:none;max-height:200px;overflow-y:auto;
+}
+.tag-dropdown.open{display:block}
+.tag-dropdown-item{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;
+}
+.tag-dropdown-item:hover{background:var(--bg3)}
+
+/* tags picker */
+.tags-picker{
+  display:flex;gap:6px;margin-top:8px;
+}
+.tag-pill{
+  display:flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid var(--border);
+  border-radius:20px;font-size:12px;cursor:pointer;color:var(--text2);
+}
+.tag-pill:hover,.tag-pill.selected{border-color:var(--accent);color:var(--accent);background:rgba(108,99,255,0.1)}
+
+/* ── MEMBERS PANEL ── */
+.members-panel{
+  width:220px;background:var(--bg2);border-left:1.5px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+}
+.members-header{
+  padding:14px 14px 10px;font-size:13px;font-weight:600;color:var(--text2);
+  border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:6px;
+}
+.members-list{flex:1;overflow-y:auto;padding:8px}
+.member-section{margin-bottom:8px}
+.member-section-label{
+  font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:0.5px;padding:4px 6px;
+}
+.member-item{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;
+}
+.member-item:hover{background:var(--bg3)}
+.member-avatar{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));overflow:hidden;
+}
+.member-avatar img{width:100%;height:100%;object-fit:cover}
+.member-name{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-emoji{font-size:13px}
+
+/* ── VOICE ROOM ── */
+.voice-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.voice-grid{
+  flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;padding:16px;overflow-y:auto;align-content:start;
+}
+.voice-card{
+  background:var(--bg3);border:2px solid var(--border);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  position:relative;transition:border-color var(--trans);
+}
+.voice-card.speaking{border-color:var(--success);box-shadow:0 0 15px rgba(34,197,94,0.2)}
+.voice-card.muted-card{opacity:0.7}
+.voice-avatar{
+  width:70px;height:70px;border-radius:18px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;
+  overflow:hidden;position:relative;
+}
+.voice-avatar img{width:100%;height:100%;object-fit:cover}
+.voice-mute-icon{
+  position:absolute;bottom:2px;right:2px;
+  background:var(--danger);border-radius:50%;width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+.voice-name{font-size:14px;font-weight:600;text-align:center}
+.voice-role-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
+.voice-vol-control{
+  width:100%;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);
+}
+.voice-vol-control input{flex:1;height:3px;appearance:none;background:var(--border);border:none;border-radius:3px;padding:0}
+.voice-vol-control input::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.screen-badge{
+  position:absolute;top:8px;right:8px;
+  background:var(--accent);color:#fff;font-size:10px;font-weight:600;
+  padding:2px 6px;border-radius:4px;cursor:pointer;
+}
+.voice-controls{
+  display:flex;align-items:center;gap:8px;padding:14px 16px;
+  background:var(--bg2);border-top:1.5px solid var(--border);flex-shrink:0;
+  flex-wrap:wrap;
+}
+.voice-ctrl-btn{
+  display:flex;align-items:center;gap:6px;padding:10px 16px;
+  border:1.5px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);
+  font-size:13px;font-weight:500;
+}
+.voice-ctrl-btn:hover{border-color:var(--border2)}
+.voice-ctrl-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.voice-ctrl-btn.danger{background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.3)}
+.voice-ctrl-btn.danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.voice-ctrl-btn.muted{background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.3)}
+
+/* ── SCREEN SHARE WINDOW ── */
+.screen-window{
+  position:fixed;background:var(--bg2);border:2px solid var(--accent);
+  border-radius:12px;box-shadow:var(--shadow);resize:both;overflow:hidden;
+  min-width:320px;min-height:200px;z-index:500;cursor:move;display:none;
+}
+.screen-window.visible{display:flex;flex-direction:column}
+.screen-window-header{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--bg3);border-bottom:1.5px solid var(--border);flex-shrink:0;
+}
+.screen-window-header span{flex:1;font-size:13px;font-weight:600}
+.screen-window video{flex:1;width:100%;background:#000;display:block}
+
+/* ── MODALS ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:200;
+  opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;
+  padding:28px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow),var(--shadow2);
+  transform:translateY(20px) scale(0.97);transition:transform 0.25s;
+}
+.modal-overlay.open .modal-box{transform:none}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%}
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:14px;font-weight:500}
+.toggle-desc{font-size:12px;color:var(--text3);margin-top:2px}
+.toggle{
+  width:44px;height:24px;border-radius:12px;background:var(--bg4);border:2px solid var(--border);
+  cursor:pointer;position:relative;transition:all var(--trans);flex-shrink:0;
+}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  transition:transform var(--trans);box-shadow:0 1px 4px rgba(0,0,0,0.3);
+}
+.toggle.on::after{transform:translateX(20px)}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.btn{padding:9px 18px;border-radius:9px;font-size:14px;font-weight:500;border:none}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(108,99,255,0.3)}
+.btn-primary:hover{background:var(--accent3);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg4);color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--bg3);border-color:var(--border2)}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--danger);border:1.5px solid rgba(239,68,68,0.3)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+
+/* ── ADMIN PANEL ── */
+.admin-panel{
+  position:fixed;inset:0;background:var(--bg);z-index:300;
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.admin-panel.open{opacity:1;pointer-events:all}
+.admin-header{
+  display:flex;align-items:center;gap:12px;padding:16px 20px;
+  background:var(--bg2);border-bottom:1.5px solid var(--border);flex-shrink:0;
+}
+.admin-header h2{font-size:18px;font-weight:700;flex:1}
+.admin-body{display:flex;flex:1;overflow:hidden}
+.admin-nav{
+  width:220px;background:var(--bg2);border-right:1.5px solid var(--border);
+  padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex-shrink:0;
+}
+.admin-nav-btn{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  border:none;background:transparent;color:var(--text2);font-size:14px;text-align:left;
+}
+.admin-nav-btn:hover{background:var(--bg3);color:var(--text)}
+.admin-nav-btn.active{background:var(--accent);color:#fff}
+.admin-content{flex:1;overflow-y:auto;padding:20px}
+.admin-tab-content{display:none}
+.admin-tab-content.active{display:block}
+.admin-table{width:100%;border-collapse:collapse;font-size:14px}
+.admin-table th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text2);font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
+.admin-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.admin-table tr:hover td{background:var(--bg3)}
+.admin-table-actions{display:flex;gap:6px}
+.admin-stat-card{
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:14px;
+  padding:20px;text-align:center;
+}
+.admin-stat-card .stat-num{font-size:36px;font-weight:800;color:var(--accent)}
+.admin-stat-card .stat-label{font-size:14px;color:var(--text2);margin-top:4px}
+.admin-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+
+/* ── PROFILE ── */
+.profile-view{
+  display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px;
+}
+.profile-big-avatar{
+  width:90px;height:90px;border-radius:22px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;
+  overflow:hidden;box-shadow:var(--glow);
+}
+.profile-big-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;
+}
+.profile-stat{
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;
+  padding:12px;text-align:center;
+}
+.profile-stat .ps-num{font-size:22px;font-weight:700;color:var(--accent)}
+.profile-stat .ps-label{font-size:11px;color:var(--text2)}
+
+/* ── LEADERBOARD ── */
+.lb-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-bottom:1px solid var(--border);transition:background var(--trans);
+}
+.lb-row:hover{background:var(--bg3)}
+.lb-rank{width:30px;font-size:18px;font-weight:800;text-align:center}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#94a3b8}
+.lb-rank.bronze{color:#cd7f32}
+.lb-info{flex:1}
+.lb-name{font-size:14px;font-weight:600}
+.lb-score{font-size:12px;color:var(--text2)}
+.lb-tabs{display:flex;gap:6px;margin-bottom:14px}
+
+/* ── FRIENDS ── */
+.friend-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border);
+}
+.friend-actions{display:flex;gap:6px;margin-left:auto}
+
+/* ── PYTHON EMBED ── */
+.code-editor{
+  width:100%;height:250px;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:10px;padding:12px;font-family:'Courier New',monospace;font-size:13px;
+  color:var(--text);resize:vertical;
+}
+.code-output{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+  padding:12px;font-family:'Courier New',monospace;font-size:12px;color:var(--success);
+  min-height:80px;max-height:150px;overflow-y:auto;white-space:pre-wrap;margin-top:8px;
+}
+
+/* ── CONNECT MODAL ── */
+.connect-modal .modal-box{width:380px}
+
+/* ── ROLES ── */
+.role-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border);
+}
+.role-color-dot{width:14px;height:14px;border-radius:50%}
+
+/* ── NOTIFICATIONS ── */
+.notif-area{
+  position:fixed;top:16px;right:16px;z-index:2000;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.notif{
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;
+  padding:12px 16px;box-shadow:var(--shadow);min-width:260px;max-width:340px;
+  display:flex;align-items:center;gap:10px;font-size:14px;
+  animation:slideInRight 0.3s ease,fadeOut 0.4s ease 3.6s forwards;
+  pointer-events:all;
+}
+.notif.success{border-color:var(--success)}
+.notif.danger{border-color:var(--danger)}
+.notif.warning{border-color:var(--warning)}
+.notif-icon{font-size:18px;flex-shrink:0}
+
+/* ── STATUS ── */
+.conn-status{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;
+  padding:8px 16px;font-size:13px;display:flex;align-items:center;gap:8px;
+  box-shadow:var(--shadow);z-index:1000;opacity:0;transition:opacity 0.3s;
+}
+.conn-status.visible{opacity:1}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dot.connected{background:var(--success)}
+.status-dot.reconnecting{background:var(--warning);animation:pulse 1s infinite}
+.status-dot.disconnected{background:var(--danger)}
+
+/* ── DROP ZONE ── */
+.drop-overlay{
+  position:absolute;inset:0;background:rgba(108,99,255,0.15);border:2px dashed var(--accent);
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--accent);font-weight:600;z-index:10;pointer-events:none;
+  opacity:0;transition:opacity 0.2s;
+}
+.drop-overlay.active{opacity:1}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:none}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+
+/* ── TOOLTIPS ── */
+[data-tooltip]{position:relative}
+[data-tooltip]::after{
+  content:attr(data-tooltip);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--bg);border:1.5px solid var(--border);border-radius:6px;
+  padding:4px 10px;font-size:12px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity 0.2s;z-index:100;color:var(--text);
+}
+[data-tooltip]:hover::after{opacity:1}
+
+/* ── SEARCH BAR ── */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;
+  padding:8px 12px;margin-bottom:12px;
+}
+.search-bar input{background:none;border:none;flex:1;font-size:13px;padding:0}
+.search-bar input:focus{box-shadow:none}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{position:absolute;left:0;top:52px;bottom:0;z-index:50;transform:translateX(-100%);transition:transform 0.3s;box-shadow:var(--shadow)}
+  .sidebar.mobile-open{transform:none}
+  .members-panel{display:none}
+  .topbar-btn.hide-mobile{display:none}
+  .voice-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+
+/* ── MISC ── */
+.spacer{flex:1}
+.flex-row{display:flex;align-items:center;gap:8px}
+.color-picker-row{display:flex;align-items:center;gap:8px}
+.badge-pill{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+.badge-admin{background:rgba(239,68,68,0.15);color:var(--admin)}
+.badge-mod{background:rgba(34,197,94,0.15);color:var(--mod)}
+.badge-owner{background:rgba(167,139,250,0.15);color:var(--owner)}
+.badge-veteran{background:rgba(6,182,212,0.15);color:var(--veteran)}
+.badge-user{background:var(--bg4);color:var(--text2)}
+.badge-bot{background:rgba(249,115,22,0.15);color:#f97316}
+.hidden{display:none!important}
+.text-center{text-align:center}
+.divider{height:1.5px;background:var(--border);margin:16px 0}
+hr{border:none;border-top:1.5px solid var(--border);margin:16px 0}
+.input-range{width:100%;accent-color:var(--accent)}
+select option{background:var(--bg2)}
+</style>
+</head>
+<body>
+
+<!-- ══ NOTIFICATIONS ══ -->
+<div id="notif-area" class="notif-area"></div>
+
+<!-- ══ CONNECTION STATUS ══ -->
+<div id="conn-status" class="conn-status">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">Подключение...</span>
+</div>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">✦</div>
+      <h1>Vietugram</h1>
+      <p>Мессенджер нового поколения · by Vietu</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Войти</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
+    </div>
+    <div id="auth-form-login">
+      <div class="auth-field"><label>Никнейм</label><input id="login-nick" type="text" placeholder="Ваш ник" autocomplete="username"></div>
+      <div class="auth-field"><label>Пароль</label><input id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password"></div>
+      <div class="auth-err" id="login-err"></div>
+      <button class="auth-submit" onclick="doLogin()">Войти →</button>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <div class="auth-field"><label>Никнейм</label><input id="reg-nick" type="text" placeholder="Придумайте ник" autocomplete="username"></div>
+      <div class="auth-field"><label>Пароль</label><input id="reg-pass" type="password" placeholder="Минимум 4 символа" autocomplete="new-password"></div>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-submit" onclick="doRegister()">Зарегистрироваться →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app" style="display:none">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-mark">✦</div>
+      Vietugram
+    </div>
+    <div class="topbar-sep"></div>
+    <button class="topbar-btn hide-mobile" onclick="openModal('leaderboard')" data-tooltip="Таблица лидеров">🏆 Топ</button>
+    <button class="topbar-btn hide-mobile" onclick="openModal('friends')" data-tooltip="Друзья и личные сообщения">👥 Друзья</button>
+    <button class="topbar-btn hide-mobile" onclick="openModal('pyembed')" data-tooltip="Встроить Python-код">🐍 Код</button>
+    <button class="topbar-btn hide-mobile" id="roles-btn" onclick="openModal('roles')" data-tooltip="Кастомные роли" style="display:none">🎨 Роли</button>
+    <button class="topbar-btn hide-mobile" id="admin-btn" onclick="openAdminPanel()" data-tooltip="Админ-панель">⚙️ Админ</button>
+    <button class="topbar-btn" onclick="openModal('connect')" data-tooltip="Подключиться по названию">🔗 Войти</button>
+    <button class="topbar-btn" onclick="toggleTheme()" data-tooltip="Сменить тему" id="theme-btn">🌙</button>
+    <button class="topbar-btn" onclick="toggleSound()" data-tooltip="Звуковые уведомления" id="sound-btn">🔔</button>
+    <!-- mobile sidebar toggle -->
+    <button class="topbar-btn" onclick="toggleSidebar()" style="display:none" id="sidebar-toggle-btn">☰</button>
+    <div class="topbar-spacer"></div>
+    <div class="user-badge" onclick="openModal('profile')">
+      <div class="user-avatar" id="topbar-avatar">?</div>
+      <div>
+        <div class="user-name" id="topbar-username">—</div>
+        <div class="user-role-badge" id="topbar-role-badge">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-search">
+          <span>🔍</span>
+          <input id="room-search" type="text" placeholder="Поиск комнат..." oninput="filterRooms(this.value)">
+        </div>
+      </div>
+      <div class="sidebar-actions">
+        <button class="sidebar-action-btn primary" onclick="openModal('create-room')">+ Создать</button>
+        <button class="sidebar-action-btn" onclick="openModal('connect')">🔗 Войти</button>
+      </div>
+      <div class="rooms-list" id="rooms-list">
+        <div class="text-center" style="color:var(--text3);padding:20px;font-size:13px">Загрузка комнат...</div>
+      </div>
+    </div>
+
+    <!-- CHAT / VOICE AREA -->
+    <div class="chat-area" id="chat-area">
+      <div class="chat-welcome" id="chat-welcome">
+        <div class="w-icon">✦</div>
+        <h2>Добро пожаловать в Vietugram!</h2>
+        <p>Выберите комнату слева или создайте новую</p>
+      </div>
+
+      <!-- TEXT CHAT -->
+      <div id="text-chat" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <!-- header -->
+        <div class="chat-header">
+          <div class="chat-header-icon" id="chat-icon">💬</div>
+          <div class="chat-header-info">
+            <h3 id="chat-room-name">—</h3>
+            <p id="chat-room-meta">0 участников</p>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn" onclick="toggleMembersPanel()" data-tooltip="Участники">👥</button>
+            <button class="icon-btn" id="search-msg-btn" onclick="openModal('search-msg')" data-tooltip="Поиск сообщений">🔍</button>
+            <button class="icon-btn" id="pin-goto-btn" style="display:none" onclick="scrollToPinned()" data-tooltip="Перейти к закреплённому">📌</button>
+            <button class="icon-btn danger" id="delete-room-btn" style="display:none" onclick="confirmDeleteRoom()" data-tooltip="Удалить комнату">🗑️</button>
+          </div>
+        </div>
+
+        <!-- pinned bar -->
+        <div class="pinned-bar" id="pinned-bar" style="display:none" onclick="scrollToPinned()">
+          <span class="pin-icon">📌</span>
+          <span id="pinned-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <button class="icon-btn" style="width:24px;height:24px;font-size:13px" onclick="event.stopPropagation();unpinMessage()" data-tooltip="Открепить">✕</button>
+        </div>
+
+        <!-- announcement bar -->
+        <div class="announcement-bar" id="announcement-bar" style="display:none">
+          <span>📢</span>
+          <span id="announcement-text" style="flex:1"></span>
+        </div>
+
+        <!-- drop overlay -->
+        <div class="drop-overlay" id="drop-overlay">📎 Перетащите изображение сюда</div>
+
+        <!-- messages -->
+        <div class="messages-area" id="messages-area"></div>
+
+        <!-- mention dropdown -->
+        <div style="position:relative">
+          <div class="tag-dropdown" id="mention-dropdown"></div>
+        </div>
+
+        <!-- input area -->
+        <div class="input-area">
+          <div class="image-preview-bar" id="img-preview-bar" style="display:none">
+            <img id="img-preview-thumb" src="" alt="">
+            <span class="img-preview-info" id="img-preview-name">image.png</span>
+            <button class="img-preview-remove" onclick="clearImagePreview()">✕</button>
+          </div>
+          <div class="tags-picker" id="tags-picker">
+            <button class="tag-pill" data-tag="important" onclick="toggleMsgTag('important')">🔴 #важное</button>
+            <button class="tag-pill" data-tag="urgent" onclick="toggleMsgTag('urgent')">🟡 #срочно</button>
+            <button class="tag-pill" data-tag="todo" onclick="toggleMsgTag('todo')">🟢 #todo</button>
+          </div>
+          <div class="input-row" style="margin-top:8px">
+            <div class="input-tools">
+              <input type="file" id="img-input" accept="image/*" style="display:none" onchange="handleImageSelect(this)">
+              <button class="input-tool-btn" onclick="document.getElementById('img-input').click()" data-tooltip="Прикрепить изображение">📎</button>
+              <button class="input-tool-btn" id="announce-btn" style="display:none" onclick="toggleAnnounceMode()" data-tooltip="Отправить как объявление">📢</button>
+            </div>
+            <textarea class="input-box" id="msg-input" placeholder="Напишите сообщение..." rows="1"
+              onkeydown="handleMsgKeydown(event)" oninput="handleMsgInput(this)"></textarea>
+            <div class="input-tools">
+              <button class="input-tool-btn send" onclick="sendMessage()" data-tooltip="Отправить (Enter)">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOICE CHAT -->
+      <div id="voice-chat" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <div class="chat-header">
+          <div class="chat-header-icon">🎙️</div>
+          <div class="chat-header-info">
+            <h3 id="voice-room-name">—</h3>
+            <p id="voice-room-meta">0 участников</p>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn danger" id="voice-delete-btn" style="display:none" onclick="confirmDeleteRoom()" data-tooltip="Удалить комнату">🗑️</button>
+          </div>
+        </div>
+        <div class="voice-area">
+          <div class="voice-grid" id="voice-grid"></div>
+          <div class="voice-controls">
+            <button class="voice-ctrl-btn" id="mic-btn" onclick="toggleMic()">🎙️ Микрофон</button>
+            <button class="voice-ctrl-btn" id="sound-ctrl-btn" onclick="toggleSounds()">🔊 Звук</button>
+            <button class="voice-ctrl-btn" id="screen-btn" onclick="toggleScreenShare()">📺 Трансляция</button>
+            <button class="voice-ctrl-btn" onclick="openModal('mic-settings')">⚙️ Настройки</button>
+            <button class="voice-ctrl-btn danger" onclick="leaveVoiceRoom()">📴 Выйти</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERS PANEL -->
+    <div class="members-panel" id="members-panel">
+      <div class="members-header">👥 Участники <span id="members-count" style="color:var(--text3)">0</span></div>
+      <div class="members-list" id="members-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING SCREEN SHARE WINDOW -->
+<div class="screen-window" id="screen-window">
+  <div class="screen-window-header">
+    <span id="screen-window-title">Трансляция экрана</span>
+    <button class="icon-btn" style="width:24px;height:24px;font-size:12px" onclick="closeScreenWindow()">✕</button>
+  </div>
+  <video id="screen-video" autoplay playsinline></video>
+</div>
+
+<!-- ════════════════════ MODALS ════════════════════ -->
+
+<!-- CREATE ROOM -->
+<div class="modal-overlay" id="modal-create-room">
+  <div class="modal-box">
+    <div class="modal-title">➕ Создать комнату</div>
+    <div class="modal-field"><label>Название комнаты</label><input id="new-room-name" type="text" placeholder="Название..."></div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">🔒 Защита паролем</div><div class="toggle-desc">Доступ только по паролю</div></div>
+      <div class="toggle" id="tog-password" onclick="toggleOption('password')"></div>
+    </div>
+    <div class="modal-field" id="password-field" style="display:none;margin-top:10px">
+      <input id="new-room-pass" type="password" placeholder="Пароль комнаты">
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">🎙️ Голосовая комната</div><div class="toggle-desc">WebRTC голосовое общение</div></div>
+      <div class="toggle" id="tog-voice" onclick="toggleOption('voice')"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">🥷 Анонимная комната</div><div class="toggle-desc">Ники скрыты</div></div>
+      <div class="toggle" id="tog-anon" onclick="toggleOption('anon')"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">⏳ Временная комната</div><div class="toggle-desc">Самоудаляется через время</div></div>
+      <div class="toggle" id="tog-temp" onclick="toggleOption('temp')"></div>
+    </div>
+    <div class="modal-field" id="lifetime-field" style="display:none;margin-top:10px">
+      <label>Время жизни (секунды)</label>
+      <input id="new-room-lifetime" type="number" min="60" placeholder="3600">
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">👁 Скрытая комната</div><div class="toggle-desc">Не отображается в списке</div></div>
+      <div class="toggle" id="tog-hidden" onclick="toggleOption('hidden')"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">🐌 Задержка сообщений</div><div class="toggle-desc">Защита от спама</div></div>
+      <div class="toggle" id="tog-spam" onclick="toggleOption('spam')"></div>
+    </div>
+    <div class="modal-field" id="spam-field" style="display:none;margin-top:10px">
+      <label>Задержка (секунды)</label>
+      <input id="new-room-spam" type="number" min="1" max="300" placeholder="5">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('create-room')">Отмена</button>
+      <button class="btn btn-primary" onclick="createRoom()">Создать комнату</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD ROOM -->
+<div class="modal-overlay" id="modal-password">
+  <div class="modal-box" style="width:340px">
+    <div class="modal-title">🔒 Введите пароль</div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:14px">Эта комната защищена паролем</p>
+    <div class="modal-field"><input id="room-password-input" type="password" placeholder="Пароль..."></div>
+    <div class="auth-err" id="pass-err" style="display:none;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('password')">Отмена</button>
+      <button class="btn btn-primary" onclick="submitRoomPassword()">Войти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN CODE -->
+<div class="modal-overlay" id="modal-admin-code">
+  <div class="modal-box" style="width:360px">
+    <div class="modal-title">⚙️ Доступ к Админ-панели</div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:14px">Введите секретный код для получения доступа</p>
+    <div class="modal-field"><input id="admin-code-input" type="password" placeholder="Секретный код..."></div>
+    <div class="auth-err" id="admin-code-err" style="display:none;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('admin-code')">Отмена</button>
+      <button class="btn btn-primary" onclick="submitAdminCode()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECT BY NAME -->
+<div class="modal-overlay connect-modal" id="modal-connect">
+  <div class="modal-box">
+    <div class="modal-title">🔗 Подключиться к комнате</div>
+    <div class="modal-field"><label>Точное название комнаты</label><input id="connect-room-name" type="text" placeholder="Название..."></div>
+    <div class="auth-err" id="connect-err" style="display:none;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('connect')">Отмена</button>
+      <button class="btn btn-primary" onclick="connectByName()">Подключиться</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="modal-overlay" id="modal-leaderboard">
+  <div class="modal-box" style="width:520px">
+    <div class="modal-title">🏆 Таблица лидеров</div>
+    <div class="lb-tabs">
+      <button class="btn btn-primary" onclick="switchLbTab('msgs')" id="lb-tab-msgs">💬 Сообщения</button>
+      <button class="btn btn-secondary" onclick="switchLbTab('reactions')" id="lb-tab-reactions">❤️ Реакции</button>
+      <button class="btn btn-secondary" onclick="switchLbTab('time')" id="lb-tab-time">⏱️ Время</button>
+    </div>
+    <div id="leaderboard-content">
+      <div class="text-center" style="padding:30px;color:var(--text3)">Загрузка...</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('leaderboard')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRIENDS -->
+<div class="modal-overlay" id="modal-friends">
+  <div class="modal-box" style="width:520px">
+    <div class="modal-title">👥 Друзья</div>
+    <div class="lb-tabs">
+      <button class="btn btn-primary" onclick="switchFriendsTab('list')" id="fr-tab-list">Друзья</button>
+      <button class="btn btn-secondary" onclick="switchFriendsTab('requests')" id="fr-tab-requests">Запросы</button>
+      <button class="btn btn-secondary" onclick="switchFriendsTab('add')" id="fr-tab-add">Добавить</button>
+    </div>
+    <div id="friends-content"><div class="text-center" style="padding:30px;color:var(--text3)">Загрузка...</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('friends')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-title">👤 Профиль</div>
+    <div class="profile-view" id="profile-content">
+      <div class="profile-big-avatar" id="profile-avatar">?</div>
+      <div style="text-align:center">
+        <div style="font-size:18px;font-weight:700" id="profile-username">—</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px" id="profile-role">—</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:4px" id="profile-bio">—</div>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="ps-num" id="profile-msgs">0</div><div class="ps-label">Сообщений</div></div>
+        <div class="profile-stat"><div class="ps-num" id="profile-reactions">0</div><div class="ps-label">Реакций</div></div>
+        <div class="profile-stat"><div class="ps-num" id="profile-time">0ч</div><div class="ps-label">В чате</div></div>
+      </div>
+      <div style="width:100%">
+        <button class="btn btn-secondary" style="width:100%;margin-bottom:8px" onclick="openEditProfile()">✏️ Редактировать профиль</button>
+        <button class="btn btn-danger" style="width:100%" onclick="logout()">🚪 Выйти</button>
+      </div>
+    </div>
+    <div id="edit-profile-form" style="display:none">
+      <div class="modal-field">
+        <label>Аватарка (изображение до 2МБ)</label>
+        <input type="file" id="avatar-input" accept="image/*" onchange="previewAvatar(this)">
+        <div style="margin-top:8px;text-align:center" id="avatar-preview-area"></div>
+      </div>
+      <div class="modal-field">
+        <label>О себе</label>
+        <textarea id="bio-input" placeholder="Расскажите о себе..." rows="3"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="cancelEditProfile()">Отмена</button>
+        <button class="btn btn-primary" onclick="saveProfile()">Сохранить</button>
+      </div>
+    </div>
+    <div class="modal-actions" id="profile-main-actions">
+      <button class="btn btn-secondary" onclick="closeModal('profile')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVATE CHAT -->
+<div class="modal-overlay" id="modal-private">
+  <div class="modal-box" style="width:520px">
+    <div class="modal-title">✉️ Личное сообщение — <span id="pm-username"></span></div>
+    <div id="pm-messages" style="height:300px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px">
+      <input id="pm-input" type="text" placeholder="Сообщение..." style="flex:1" onkeydown="if(event.key==='Enter')sendPM()">
+      <button class="btn btn-primary" onclick="sendPM()">→</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('private')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- PYTHON EMBED -->
+<div class="modal-overlay" id="modal-pyembed">
+  <div class="modal-box" style="width:600px">
+    <div class="modal-title">🐍 Python Мини-приложение</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Код выполняется локально через Pyodide (WebAssembly). Сохраняется в браузере.</p>
+    <div class="modal-field">
+      <label>Сохранённые скрипты</label>
+      <select id="saved-scripts" onchange="loadSavedScript(this.value)">
+        <option value="">— Новый скрипт —</option>
+      </select>
+    </div>
+    <textarea class="code-editor" id="py-code" placeholder="# Python код здесь
+# Доступен объект vietugram:
+# vietugram.send_message('текст') — отправить сообщение
+# vietugram.get_room() — текущая комната
+# vietugram.get_username() — ваш ник
+print('Привет из Python!')"></textarea>
+    <div class="code-output" id="py-output">Вывод появится здесь...</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="savePyScript()">💾 Сохранить</button>
+      <button class="btn btn-secondary" onclick="closeModal('pyembed')">Закрыть</button>
+      <button class="btn btn-primary" onclick="runPyCode()" id="run-py-btn">▶ Запустить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROLES -->
+<div class="modal-overlay" id="modal-roles">
+  <div class="modal-box" style="width:500px">
+    <div class="modal-title">🎨 Кастомные роли</div>
+    <div style="border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+      <div id="roles-list"><div class="text-center" style="padding:20px;color:var(--text3)">Нет кастомных ролей</div></div>
+    </div>
+    <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:16px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Создать роль</div>
+      <div class="modal-field"><label>Название роли</label><input id="role-name-input" type="text" placeholder="Название..."></div>
+      <div class="modal-field" style="display:flex;gap:10px;align-items:center">
+        <div style="flex:1"><label>Цвет ника</label><input id="role-color-input" type="color" value="#6c63ff" style="width:100%;height:36px;padding:2px;cursor:pointer"></div>
+        <div style="flex:1"><label>Эмодзи-статус</label><input id="role-emoji-input" type="text" placeholder="🎯" maxlength="4"></div>
+        <div style="flex:1"><label>Префикс</label><input id="role-prefix-input" type="text" placeholder="[VIP]" maxlength="10"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="createCustomRole()">Создать роль</button>
+    </div>
+    <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-top:12px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Назначить роль пользователю</div>
+      <div class="flex-row" style="gap:8px">
+        <input id="assign-role-user" type="text" placeholder="Ник пользователя" style="flex:1">
+        <select id="assign-role-select" style="flex:1"><option value="">Выберите роль</option></select>
+        <button class="btn btn-primary" onclick="assignCustomRole()">Выдать</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('roles')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- MIC SETTINGS -->
+<div class="modal-overlay" id="modal-mic-settings">
+  <div class="modal-box" style="width:400px">
+    <div class="modal-title">🎛️ Настройки микрофона</div>
+    <div class="modal-field">
+      <label>Устройство ввода</label>
+      <select id="mic-device-select" onchange="changeMicDevice(this.value)"></select>
+    </div>
+    <div class="modal-field">
+      <label>Громкость микрофона: <span id="mic-vol-label">100%</span></label>
+      <input type="range" class="input-range" id="mic-vol-slider" min="0" max="200" value="100" oninput="changeMicVolume(this.value)">
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">🎛️ Шумоподавление</div><div class="toggle-desc">Фильтрация фонового шума</div></div>
+      <div class="toggle" id="tog-noise" onclick="toggleNoiseSuppression()"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('mic-settings')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH MESSAGES -->
+<div class="modal-overlay" id="modal-search-msg">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-title">🔍 Поиск сообщений</div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input id="search-msg-input" type="text" placeholder="Поиск по тексту или автору..." oninput="searchMessages(this.value)">
+    </div>
+    <div id="search-msg-results" style="max-height:350px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('search-msg')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU (member) -->
+<div id="context-menu" style="position:fixed;display:none;background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:1000;min-width:180px">
+</div>
+
+<!-- ═══════════════ ADMIN PANEL ═══════════════ -->
+<div class="admin-panel" id="admin-panel">
+  <div class="admin-header">
+    <span>⚙️</span>
+    <h2>Административная панель</h2>
+    <button class="btn btn-secondary" onclick="closeAdminPanel()">✕ Закрыть</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-nav">
+      <button class="admin-nav-btn active" onclick="switchAdminTab('stats')" id="atab-stats">📊 Статистика</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('users')" id="atab-users">👥 Пользователи</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('rooms')" id="atab-rooms">🏠 Комнаты</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('mods')" id="atab-mods">🛡️ Модераторы</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('bans')" id="atab-bans">🚫 Баны</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('announce')" id="atab-announce">📢 Объявления</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('joinmsg')" id="atab-joinmsg">✉️ Сообщение входа</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('observer')" id="atab-observer">👁️ Наблюдатель</button>
+      <button class="admin-nav-btn" onclick="switchAdminTab('log')" id="atab-log">📋 Лог действий</button>
+    </div>
+    <div class="admin-content">
+      <!-- STATS -->
+      <div class="admin-tab-content active" id="acontent-stats">
+        <h3 style="margin-bottom:16px">📊 Статистика сервера</h3>
+        <div class="admin-stats">
+          <div class="admin-stat-card"><div class="stat-num" id="stat-users">0</div><div class="stat-label">Пользователей</div></div>
+          <div class="admin-stat-card"><div class="stat-num" id="stat-rooms">0</div><div class="stat-label">Комнат</div></div>
+          <div class="admin-stat-card"><div class="stat-num" id="stat-msgs">0</div><div class="stat-label">Сообщений</div></div>
+          <div class="admin-stat-card"><div class="stat-num" id="stat-online">0</div><div class="stat-label">Онлайн</div></div>
+        </div>
+      </div>
+      <!-- USERS -->
+      <div class="admin-tab-content" id="acontent-users">
+        <h3 style="margin-bottom:12px">👥 Пользователи</h3>
+        <div class="search-bar"><span>🔍</span><input id="admin-user-search" type="text" placeholder="Поиск по нику..." oninput="filterAdminUsers(this.value)"></div>
+        <div style="overflow-x:auto">
+          <table class="admin-table"><thead><tr><th>Ник</th><th>Роль</th><th>Сообщений</th><th>Действия</th></tr></thead>
+          <tbody id="admin-users-tbody"></tbody></table>
+        </div>
+      </div>
+      <!-- ROOMS -->
+      <div class="admin-tab-content" id="acontent-rooms">
+        <h3 style="margin-bottom:12px">🏠 Все комнаты</h3>
+        <div style="overflow-x:auto">
+          <table class="admin-table"><thead><tr><th>Название</th><th>Тип</th><th>Владелец</th><th>Участников</th><th>Действия</th></tr></thead>
+          <tbody id="admin-rooms-tbody"></tbody></table>
+        </div>
+      </div>
+      <!-- MODS -->
+      <div class="admin-tab-content" id="acontent-mods">
+        <h3 style="margin-bottom:12px">🛡️ Модераторы</h3>
+        <div id="mods-list" style="margin-bottom:16px"></div>
+        <div class="flex-row">
+          <input id="new-mod-input" type="text" placeholder="Ник пользователя" style="flex:1">
+          <button class="btn btn-primary" onclick="addModerator()">Назначить модератором</button>
+        </div>
+      </div>
+      <!-- BANS -->
+      <div class="admin-tab-content" id="acontent-bans">
+        <h3 style="margin-bottom:12px">🚫 Заблокированные</h3>
+        <div id="bans-list" style="margin-bottom:16px"></div>
+        <div class="flex-row">
+          <input id="new-ban-input" type="text" placeholder="Ник для бана" style="flex:1">
+          <button class="btn btn-danger" onclick="banUser(document.getElementById('new-ban-input').value)">Забанить</button>
+        </div>
+      </div>
+      <!-- ANNOUNCE -->
+      <div class="admin-tab-content" id="acontent-announce">
+        <h3 style="margin-bottom:12px">📢 Глобальное объявление</h3>
+        <div class="modal-field"><label>Текст объявления (пусто = отключить)</label><textarea id="global-announce-input" rows="3" placeholder="Текст объявления..."></textarea></div>
+        <button class="btn btn-primary" onclick="setGlobalAnnouncement()">Установить объявление</button>
+      </div>
+      <!-- JOIN MSG -->
+      <div class="admin-tab-content" id="acontent-joinmsg">
+        <h3 style="margin-bottom:12px">✉️ Сообщение при входе в комнату</h3>
+        <div class="modal-field"><label>Глобальное сообщение (пусто = отключить)</label><textarea id="global-joinmsg-input" rows="3" placeholder="Добро пожаловать, {username}!"></textarea></div>
+        <button class="btn btn-primary" onclick="setGlobalJoinMsg()">Установить</button>
+        <hr>
+        <div class="modal-field" style="margin-top:12px">
+          <label>Комната (название)</label>
+          <input id="room-joinmsg-room" type="text" placeholder="Название комнаты">
+        </div>
+        <div class="modal-field">
+          <label>Сообщение для этой комнаты</label>
+          <textarea id="room-joinmsg-input" rows="3" placeholder="Добро пожаловать в {room_name}!"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="setRoomJoinMsg()">Установить для комнаты</button>
+      </div>
+      <!-- OBSERVER -->
+      <div class="admin-tab-content" id="acontent-observer">
+        <h3 style="margin-bottom:12px">👁️ Режим наблюдателя</h3>
+        <p style="color:var(--text2);font-size:14px;margin-bottom:16px">В режиме наблюдателя вы невидимы для других участников комнат. Системные сообщения о вашем входе/выходе не отображаются.</p>
+        <button class="btn btn-primary" id="observer-toggle-btn" onclick="toggleObserver()">Активировать режим наблюдателя</button>
+        <div id="observer-status" style="margin-top:12px;font-size:14px;color:var(--text2)"></div>
+      </div>
+      <!-- LOG -->
+      <div class="admin-tab-content" id="acontent-log">
+        <h3 style="margin-bottom:12px">📋 Лог действий</h3>
+        <div id="action-log-list" style="max-height:500px;overflow-y:auto;font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ JAVASCRIPT ════ -->
+<script>
+// ─── CONFIG & STATE ───────────────────────────────────────────────────────────
+const socket = io({ reconnection: true, reconnectionDelay: 1000, reconnectionDelayMax: 16000, reconnectionAttempts: Infinity });
+let myUsername = null, myRole = 'user', myToken = null;
+let currentRoom = null, currentRoomData = null;
+let allRooms = [], myFriends = [], friendRequests = [];
+let pendingRoomPassword = null, pendingRoomId = null;
+let isObserver = false, soundEnabled = true;
+let localStream = null, peerConnections = {}, screenStream = null;
+let audioContext = null, gainNode = null, noiseFilter = null;
+let msgTags = [], isAnnounceMode = false;
+let editingMessageId = null;
+let unreadCounts = {};
+let pyodideReady = false, pyodide = null;
+let lbTab = 'msgs', frTab = 'list', adminTab = 'stats';
+let allUsersData = [], allRoomsAdmin = [];
+let micVolume = 1.0, noiseSuppression = false;
+let voiceConnected = false;
+let reconnectTimer = null;
+let iceServers = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+let pmTarget = null, pmHistory = {};
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function showNotif(msg, type = 'info', dur = 4000) {
+  const area = document.getElementById('notif-area');
+  const el = document.createElement('div');
+  const icons = { info: 'ℹ️', success: '✅', danger: '❌', warning: '⚠️' };
+  el.className = `notif ${type}`;
+  el.innerHTML = `<span class="notif-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), dur + 400);
+  if (soundEnabled && type !== 'info') playBeep(type === 'success' ? 880 : 440);
+}
+function playBeep(freq = 440, dur = 0.15) {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.frequency.value = freq; g.gain.value = 0.1;
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e){}
+}
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-btn').textContent = soundEnabled ? '🔔' : '🔕';
+  localStorage.setItem('soundEnabled', soundEnabled);
+}
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+function initTheme() {
+  const t = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '🌙' : '☀️';
+  soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+  document.getElementById('sound-btn').textContent = soundEnabled ? '🔔' : '🔕';
+}
+function getRoleBadgeClass(role) {
+  return { admin: 'badge-admin', moderator: 'badge-mod', owner: 'badge-owner', veteran: 'badge-veteran', bot: 'badge-bot', user: 'badge-user' }[role] || 'badge-user';
+}
+function getRoleLabel(role) {
+  return { admin: '👑 Администратор', moderator: '🛡️ Модератор', owner: '🏠 Владелец', veteran: '🏆 Ветеран', bot: '🤖 Бот', user: '👤 Пользователь' }[role] || '👤 Пользователь';
+}
+function getRoleColor(role) {
+  return { admin: 'var(--admin)', moderator: 'var(--mod)', owner: 'var(--owner)', veteran: 'var(--veteran)' }[role] || 'var(--text)';
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatTime(ms) {
+  const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`;
+}
+function generateAnonId(seed) {
+  const names = ['Аноним', 'Тень', 'Призрак', 'Маска', 'Незнакомец', 'Инкогнито', 'Странник'];
+  return names[Math.abs(seed.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % names.length] + '#' + seed.slice(-4).toUpperCase();
+}
+function canModerate() { return myRole === 'admin' || myRole === 'moderator'; }
+function canAdmin() { return myRole === 'admin'; }
+function isRoomOwner() { return currentRoomData && currentRoomData.owner === myUsername; }
+function canManageRoom() { return canModerate() || isRoomOwner(); }
+
+// ─── MODAL SYSTEM ─────────────────────────────────────────────────────────────
+function openModal(name) {
+  const el = document.getElementById(`modal-${name}`);
+  if (!el) return;
+  el.classList.add('open');
+  if (name === 'leaderboard') loadLeaderboard();
+  if (name === 'friends') loadFriends();
+  if (name === 'profile') loadProfile();
+  if (name === 'roles') loadRoles();
+  if (name === 'mic-settings') loadMicDevices();
+  if (name === 'pyembed') loadSavedScripts();
+}
+function closeModal(name) {
+  const el = document.getElementById(`modal-${name}`);
+  if (el) el.classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+  document.getElementById('auth-form-login').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('auth-form-register').style.display = tab === 'register' ? '' : 'none';
+}
+function doLogin() {
+  const nick = document.getElementById('login-nick').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  if (!nick || !pass) { err.textContent = 'Заполните все поля'; err.style.display = ''; return; }
+  err.style.display = 'none';
+  socket.emit('login', { username: nick, password: pass });
+}
+function doRegister() {
+  const nick = document.getElementById('reg-nick').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const err = document.getElementById('reg-err');
+  if (!nick) { err.textContent = 'Введите никнейм'; err.style.display = ''; return; }
+  if (pass.length < 4) { err.textContent = 'Пароль — минимум 4 символа'; err.style.display = ''; return; }
+  err.style.display = 'none';
+  socket.emit('register', { username: nick, password: pass });
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('reg-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+
+function onAuthSuccess(data) {
+  myUsername = data.username;
+  myRole = data.role;
+  myToken = data.token;
+  localStorage.setItem('session', JSON.stringify({ username: myUsername, token: myToken }));
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateUserBadge(data);
+  // check if mod/admin for roles button
+  if (canModerate()) document.getElementById('roles-btn').style.display = '';
+  // check observer
+  if (data.is_observer) {
+    isObserver = true;
+    document.getElementById('observer-toggle-btn') && (document.getElementById('observer-toggle-btn').textContent = 'Деактивировать режим наблюдателя');
+  }
+  socket.emit('request_rooms');
+  socket.emit('request_friends');
+  loadLeaderboardData();
+}
+function updateUserBadge(data) {
+  const ud = data.custom_role_data;
+  const color = ud ? ud.color : getRoleColor(data.role);
+  const label = ud ? `${ud.emoji||''} ${ud.name}` : getRoleLabel(data.role);
+  document.getElementById('topbar-username').textContent = (ud ? (ud.prefix ? ud.prefix + ' ' : '') : '') + data.username;
+  document.getElementById('topbar-username').style.color = color;
+  const rb = document.getElementById('topbar-role-badge');
+  rb.textContent = label;
+  rb.className = `user-role-badge ${getRoleBadgeClass(data.role)}`;
+  const av = document.getElementById('topbar-avatar');
+  if (data.avatar) { av.innerHTML = `<img src="${data.avatar}" alt="">`; }
+  else { av.textContent = data.username.charAt(0).toUpperCase(); }
+}
+function logout() {
+  localStorage.removeItem('session');
+  socket.emit('logout');
+  location.reload();
+}
+function autoLogin() {
+  try {
+    const s = JSON.parse(localStorage.getItem('session'));
+    if (s && s.username && s.token) {
+      socket.emit('autologin', { username: s.username, token: s.token });
+    }
+  } catch(e){}
+}
+
+// ─── CONNECTION STATUS ────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  const bar = document.getElementById('conn-status');
+  dot.className = `status-dot ${state}`;
+  txt.textContent = text;
+  bar.classList.add('visible');
+  if (state === 'connected') setTimeout(() => bar.classList.remove('visible'), 2000);
+}
+
+// ─── ROOMS ────────────────────────────────────────────────────────────────────
+function buildRoomsList(rooms) {
+  allRooms = rooms;
+  filterRooms(document.getElementById('room-search').value);
+}
+function filterRooms(query) {
+  const q = query.toLowerCase();
+  const list = document.getElementById('rooms-list');
+  const visible = allRooms.filter(r => {
+    if (r.is_bot_room && !canAdmin()) return false;
+    if (r.is_hidden && !canAdmin()) return false;
+    return !q || r.name.toLowerCase().includes(q);
+  });
+  if (!visible.length) { list.innerHTML = '<div class="text-center" style="padding:20px;color:var(--text3);font-size:13px">Комнат не найдено</div>'; return; }
+  const pinned = visible.filter(r => r.pinned);
+  const normal = visible.filter(r => !r.pinned);
+  let html = '';
+  if (pinned.length) {
+    html += '<div class="rooms-section-label">📌 Закреплённые</div>';
+    pinned.forEach(r => html += roomCardHtml(r, true));
+  }
+  if (normal.length) {
+    html += '<div class="rooms-section-label">💬 Комнаты</div>';
+    normal.forEach(r => html += roomCardHtml(r, false));
+  }
+  list.innerHTML = html;
+}
+function roomCardHtml(r, pinned) {
+  const icon = r.is_voice ? '🎙️' : r.is_anonymous ? '🥷' : r.is_bot_room ? '🤖' : r.is_hidden ? '👁' : '💬';
+  const lock = r.has_password ? '🔒' : '';
+  const active = currentRoom === r.id ? 'active' : '';
+  const pinnedClass = pinned ? 'pinned' : '';
+  const unread = unreadCounts[r.id] ? `<div class="room-badge unread-badge">${unreadCounts[r.id]}</div>` : '';
+  const timeLeft = r.lifetime_ms ? getTimeLeft(r.created_at, r.lifetime_ms) : '';
+  return `<div class="room-card ${active} ${pinnedClass}" onclick="joinRoom('${r.id}','${escapeHtml(r.name)}',${r.has_password},${r.is_voice})">
+    <div class="room-icon">${icon}</div>
+    <div class="room-info">
+      <div class="room-name">${escapeHtml(r.name)}</div>
+      <div class="room-meta"><span>👥 ${r.members_count}</span>${lock ? `<span>${lock}</span>` : ''}${timeLeft ? `<span>⏳${timeLeft}</span>` : ''}</div>
+    </div>
+    ${unread}
+  </div>`;
+}
+function getTimeLeft(createdAt, lifetimeMs) {
+  const remaining = lifetimeMs - (Date.now() - createdAt);
+  if (remaining <= 0) return 'истекла';
+  const s = Math.floor(remaining / 1000);
+  if (s < 60) return `${s}с`;
+  if (s < 3600) return `${Math.floor(s/60)}м`;
+  return `${Math.floor(s/3600)}ч`;
+}
+function joinRoom(roomId, roomName, hasPassword, isVoice) {
+  if (hasPassword && !canAdmin()) {
+    pendingRoomId = roomId;
+    document.getElementById('room-password-input').value = '';
+    document.getElementById('pass-err').style.display = 'none';
+    openModal('password');
+    return;
+  }
+  socket.emit('join_room', { room_id: roomId, password: '' });
+}
+function submitRoomPassword() {
+  const pw = document.getElementById('room-password-input').value;
+  if (!pw) { document.getElementById('pass-err').textContent = 'Введите пароль'; document.getElementById('pass-err').style.display = ''; return; }
+  socket.emit('join_room', { room_id: pendingRoomId, password: pw });
+}
+function connectByName() {
+  const name = document.getElementById('connect-room-name').value.trim();
+  if (!name) { document.getElementById('connect-err').textContent = 'Введите название'; document.getElementById('connect-err').style.display = ''; return; }
+  socket.emit('connect_by_name', { room_name: name });
+  closeModal('connect');
+}
+
+// ─── CREATE ROOM ──────────────────────────────────────────────────────────────
+const toggleStates = {};
+function toggleOption(opt) {
+  toggleStates[opt] = !toggleStates[opt];
+  const tog = document.getElementById(`tog-${opt}`);
+  tog.classList.toggle('on', toggleStates[opt]);
+  if (opt === 'password') document.getElementById('password-field').style.display = toggleStates[opt] ? '' : 'none';
+  if (opt === 'temp') document.getElementById('lifetime-field').style.display = toggleStates[opt] ? '' : 'none';
+  if (opt === 'spam') document.getElementById('spam-field').style.display = toggleStates[opt] ? '' : 'none';
+}
+function createRoom() {
+  const name = document.getElementById('new-room-name').value.trim();
+  if (!name) { showNotif('Введите название комнаты', 'warning'); return; }
+  const data = {
+    name,
+    password: toggleStates.password ? document.getElementById('new-room-pass').value : '',
+    is_voice: !!toggleStates.voice,
+    is_anonymous: !!toggleStates.anon,
+    is_hidden: !!toggleStates.hidden,
+    lifetime_sec: toggleStates.temp ? parseInt(document.getElementById('new-room-lifetime').value) || 3600 : 0,
+    spam_delay: toggleStates.spam ? parseInt(document.getElementById('new-room-spam').value) || 5 : 0,
+  };
+  socket.emit('create_room', data);
+  closeModal('create-room');
+  document.getElementById('new-room-name').value = '';
+  Object.keys(toggleStates).forEach(k => { toggleStates[k] = false; document.getElementById(`tog-${k}`).classList.remove('on'); });
+  ['password-field','lifetime-field','spam-field'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+
+// ─── ROOM ENTERED ─────────────────────────────────────────────────────────────
+function onRoomJoined(data) {
+  closeModal('password');
+  currentRoom = data.room_id;
+  currentRoomData = data.room;
+  unreadCounts[data.room_id] = 0;
+  filterRooms(document.getElementById('room-search').value);
+  if (data.room.is_voice) {
+    showVoiceChat(data);
+  } else {
+    showTextChat(data);
+  }
+  // scroll to bottom
+  setTimeout(() => scrollToBottom(), 100);
+}
+function showTextChat(data) {
+  document.getElementById('chat-welcome').style.display = 'none';
+  document.getElementById('text-chat').style.display = 'flex';
+  document.getElementById('voice-chat').style.display = 'none';
+  document.getElementById('chat-icon').textContent = data.room.is_anonymous ? '🥷' : '💬';
+  document.getElementById('chat-room-name').textContent = data.room.name;
+  const msgs = document.getElementById('messages-area');
+  msgs.innerHTML = '';
+  // render history
+  (data.history || []).forEach(m => renderMessage(m));
+  // pinned
+  if (data.room.pinned_msg) showPinnedBar(data.room.pinned_msg);
+  else hidePinnedBar();
+  // announce
+  if (data.room.custom_join_msg) showSystemMsg(data.room.custom_join_msg.replace('{username}', myUsername).replace('{room_name}', data.room.name));
+  updateMembersPanel(data.members || []);
+  updateRoomMeta(data.members ? data.members.length : 0);
+  // show mod controls
+  document.getElementById('delete-room-btn').style.display = canManageRoom() ? '' : 'none';
+  document.getElementById('announce-btn').style.display = canModerate() ? '' : 'none';
+  document.getElementById('pin-goto-btn').style.display = data.room.pinned_msg ? '' : 'none';
+}
+function showVoiceChat(data) {
+  document.getElementById('chat-welcome').style.display = 'none';
+  document.getElementById('text-chat').style.display = 'none';
+  document.getElementById('voice-chat').style.display = 'flex';
+  document.getElementById('voice-room-name').textContent = data.room.name;
+  document.getElementById('voice-delete-btn').style.display = canManageRoom() ? '' : 'none';
+  document.getElementById('voice-grid').innerHTML = '';
+  updateVoiceGrid(data.members || []);
+  startVoice();
+}
+function updateRoomMeta(count) {
+  document.getElementById('chat-room-meta').textContent = `${count} участник${count===1?'':count<5?'а':'ов'}`;
+}
+
+// ─── MESSAGES ─────────────────────────────────────────────────────────────────
+function renderMessage(m) {
+  const area = document.getElementById('messages-area');
+  if (!area) return;
+  const isMe = m.author === myUsername;
+  const isAnon = currentRoomData && currentRoomData.is_anonymous;
+  const displayName = isAnon ? generateAnonId(m.author) : m.author;
+
+  if (m.is_system) {
+    area.insertAdjacentHTML('beforeend', `<div class="system-msg">${escapeHtml(m.text)}</div>`);
+    scrollToBottom(); return;
+  }
+
+  // build tags html
+  let tagsHtml = '';
+  if (m.msg_tags && m.msg_tags.length) {
+    const tagMap = { important: '🔴 #важное', urgent: '🟡 #срочно', todo: '🟢 #todo' };
+    tagsHtml = `<div class="msg-tags">${m.msg_tags.map(t => `<span class="msg-tag ${t}">${tagMap[t]||t}</span>`).join('')}</div>`;
+  }
+
+  // build reactions
+  let reactHtml = '';
+  if (m.reactions && Object.keys(m.reactions).length) {
+    reactHtml = '<div class="reactions-bar">';
+    for (const [emoji, users] of Object.entries(m.reactions)) {
+      const mine = users.includes(myUsername);
+      reactHtml += `<button class="reaction-btn ${mine?'mine':''}" onclick="toggleReaction('${m.id}','${emoji}')">${emoji}<span class="cnt">${users.length}</span></button>`;
+    }
+    reactHtml += '</div>';
+  }
+
+  // text with mentions
+  const textHtml = formatMsgText(m.text || '');
+  const isMentioned = m.text && m.text.includes('@' + myUsername);
+  const rowClass = `msg-row${isMentioned ? ' msg-mention' : ''}`;
+
+  // avatar
+  const initials = displayName.charAt(0).toUpperCase();
+  const avatarHtml = m.author_avatar
+    ? `<img src="${m.author_avatar}" alt="">`
+    : initials;
+
+  // role color
+  const color = m.custom_role_data ? m.custom_role_data.color : getRoleColor(m.author_role || 'user');
+  const rolePrefix = m.custom_role_data ? (m.custom_role_data.prefix ? `<span style="color:${m.custom_role_data.color};font-size:11px;font-weight:700">${escapeHtml(m.custom_role_data.prefix)}</span> ` : '') : '';
+  const roleEmoji = m.custom_role_data ? (m.custom_role_data.emoji || '') : '';
+
+  let contentHtml = '';
+  if (m.deleted) {
+    contentHtml = `<div class="msg-deleted">🚫 Сообщение удалено</div>`;
+  } else if (m.is_announcement) {
+    contentHtml = `<div class="msg-announcement"><div class="ann-label">📢 Объявление</div>${tagsHtml}<div class="msg-text">${textHtml}</div>${m.image ? `<img class="msg-img" src="${m.image}" onclick="openImg(this.src)">` : ''}${reactHtml}</div>`;
+    area.insertAdjacentHTML('beforeend', contentHtml);
+    scrollToBottom(); return;
+  } else {
+    contentHtml = `${tagsHtml}<div class="msg-text" id="msg-text-${m.id}">${textHtml}</div>${m.image ? `<img class="msg-img" src="${m.image}" onclick="openImg(this.src)">` : ''}${reactHtml}`;
+  }
+
+  // actions
+  let actionsHtml = '<div class="msg-actions">';
+  actionsHtml += `<button class="msg-action-btn" onclick="addReaction('${m.id}')" title="Реакция">😊</button>`;
+  if (!m.deleted) {
+    if (isMe) actionsHtml += `<button class="msg-action-btn" onclick="startEdit('${m.id}')" title="Редактировать">✏️</button>`;
+    if (isMe || canModerate()) actionsHtml += `<button class="msg-action-btn danger" onclick="deleteMsg('${m.id}')" title="Удалить">🗑️</button>`;
+    if (canManageRoom()) actionsHtml += `<button class="msg-action-btn" onclick="pinMessage('${m.id}')" title="Закрепить">📌</button>`;
+  }
+  actionsHtml += '</div>';
+
+  const el = document.createElement('div');
+  el.className = rowClass;
+  el.id = `msg-${m.id}`;
+  el.innerHTML = `
+    <div class="msg-avatar">${avatarHtml}</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        ${rolePrefix}<span class="msg-author" style="color:${color}" onclick="openMemberMenu('${m.author}',event)">${roleEmoji ? roleEmoji + ' ' : ''}${escapeHtml(displayName)}</span>
+        <span class="msg-time">${m.timestamp || ''}</span>
+        ${m.edited ? '<span class="msg-edited">(изменено)</span>' : ''}
+      </div>
+      ${m.deleted ? `<div class="msg-deleted">🚫 Сообщение удалено</div>` : contentHtml}
+    </div>
+    ${actionsHtml}
+  `;
+  area.appendChild(el);
+  scrollToBottom();
+
+  // notification
+  if (!isMe && isMentioned) {
+    showNotif(`@упоминание от ${displayName}`, 'warning');
+    if (soundEnabled) playBeep(1200, 0.2);
+  }
+}
+function formatMsgText(text) {
+  let s = escapeHtml(text);
+  s = s.replace(/@(\w+)/g, '<span class="mention-highlight">@$1</span>');
+  s = s.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  return s;
+}
+function scrollToBottom() {
+  const area = document.getElementById('messages-area');
+  if (area) area.scrollTop = area.scrollHeight;
+}
+function showSystemMsg(text) {
+  const area = document.getElementById('messages-area');
+  if (!area) return;
+  area.insertAdjacentHTML('beforeend', `<div class="system-msg">${escapeHtml(text)}</div>`);
+  scrollToBottom();
+}
+
+// ─── SEND MESSAGE ─────────────────────────────────────────────────────────────
+let pendingImage = null;
+function handleMsgKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  if (e.key === '@') { setTimeout(() => showMentionDropdown(), 50); }
+  if (e.key === 'Escape') { hideMentionDropdown(); cancelEdit(); }
+}
+function handleMsgInput(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  const val = ta.value;
+  const atIdx = val.lastIndexOf('@');
+  if (atIdx !== -1 && atIdx === val.length - 1 || (atIdx !== -1 && /\w*$/.test(val.slice(atIdx+1)))) {
+    const query = val.slice(atIdx + 1).toLowerCase();
+    updateMentionDropdown(query);
+  } else {
+    hideMentionDropdown();
+  }
+}
+function showMentionDropdown() { updateMentionDropdown(''); }
+function updateMentionDropdown(query) {
+  if (!currentRoom) return;
+  const members = Array.from(document.querySelectorAll('#members-list .member-item'));
+  const names = members.map(m => m.dataset.username).filter(n => n && n !== myUsername && n.toLowerCase().includes(query));
+  if (!names.length) { hideMentionDropdown(); return; }
+  const dd = document.getElementById('mention-dropdown');
+  dd.innerHTML = names.slice(0, 8).map(n => `<div class="tag-dropdown-item" onclick="insertMention('${n}')">@${escapeHtml(n)}</div>`).join('');
+  dd.classList.add('open');
+}
+function hideMentionDropdown() { document.getElementById('mention-dropdown').classList.remove('open'); }
+function insertMention(name) {
+  const inp = document.getElementById('msg-input');
+  const val = inp.value;
+  const atIdx = val.lastIndexOf('@');
+  inp.value = val.slice(0, atIdx) + `@${name} `;
+  hideMentionDropdown();
+  inp.focus();
+}
+function toggleMsgTag(tag) {
+  const btn = document.querySelector(`[data-tag="${tag}"]`);
+  if (msgTags.includes(tag)) { msgTags = msgTags.filter(t => t !== tag); btn.classList.remove('selected'); }
+  else { msgTags.push(tag); btn.classList.add('selected'); }
+}
+function toggleAnnounceMode() {
+  isAnnounceMode = !isAnnounceMode;
+  document.getElementById('announce-btn').classList.toggle('active', isAnnounceMode);
+}
+function sendMessage() {
+  if (!currentRoom) return;
+  const inp = document.getElementById('msg-input');
+  const text = inp.value.trim();
+  if (!text && !pendingImage) return;
+  if (editingMessageId) { submitEdit(); return; }
+  socket.emit('send_message', {
+    room_id: currentRoom,
+    text,
+    image: pendingImage,
+    msg_tags: [...msgTags],
+    is_announcement: isAnnounceMode,
+  });
+  inp.value = '';
+  inp.style.height = 'auto';
+  clearImagePreview();
+  msgTags = [];
+  document.querySelectorAll('.tag-pill').forEach(b => b.classList.remove('selected'));
+  isAnnounceMode = false;
+  document.getElementById('announce-btn').classList.remove('active');
+  hideMentionDropdown();
+}
+function startEdit(msgId) {
+  const textEl = document.getElementById(`msg-text-${msgId}`);
+  if (!textEl) return;
+  editingMessageId = msgId;
+  const inp = document.getElementById('msg-input');
+  // get plain text from data attribute if stored, else from text content
+  const msgEl = document.getElementById(`msg-${msgId}`);
+  if (msgEl) {
+    const rawText = msgEl.dataset.rawText || textEl.textContent;
+    inp.value = rawText;
+  }
+  inp.focus();
+  document.getElementById('announce-btn').style.display = 'none';
+}
+function submitEdit() {
+  const text = document.getElementById('msg-input').value.trim();
+  if (!text) { cancelEdit(); return; }
+  socket.emit('edit_message', { room_id: currentRoom, msg_id: editingMessageId, text });
+  cancelEdit();
+}
+function cancelEdit() {
+  editingMessageId = null;
+  document.getElementById('msg-input').value = '';
+  document.getElementById('msg-input').style.height = 'auto';
+  if (canModerate()) document.getElementById('announce-btn').style.display = '';
+}
+function deleteMsg(msgId) {
+  socket.emit('delete_message', { room_id: currentRoom, msg_id: msgId });
+}
+function pinMessage(msgId) {
+  socket.emit('pin_message', { room_id: currentRoom, msg_id: msgId });
+}
+function unpinMessage() {
+  socket.emit('unpin_message', { room_id: currentRoom });
+}
+function showPinnedBar(msg) {
+  const bar = document.getElementById('pinned-bar');
+  bar.style.display = 'flex';
+  document.getElementById('pinned-text').textContent = msg.text || '';
+  document.getElementById('pin-goto-btn').style.display = '';
+  bar.dataset.msgId = msg.id;
+}
+function hidePinnedBar() {
+  document.getElementById('pinned-bar').style.display = 'none';
+  document.getElementById('pin-goto-btn').style.display = 'none';
+}
+function scrollToPinned() {
+  const msgId = document.getElementById('pinned-bar').dataset.msgId;
+  const el = document.getElementById(`msg-${msgId}`);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.background = 'rgba(108,99,255,0.15)'; setTimeout(() => el.style.background = '', 2000); }
+}
+
+// ─── IMAGES ───────────────────────────────────────────────────────────────────
+function handleImageSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showNotif('Файл слишком большой (макс. 5МБ)', 'danger'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingImage = e.target.result;
+    document.getElementById('img-preview-bar').style.display = 'flex';
+    document.getElementById('img-preview-thumb').src = pendingImage;
+    document.getElementById('img-preview-name').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+function clearImagePreview() {
+  pendingImage = null;
+  document.getElementById('img-preview-bar').style.display = 'none';
+  document.getElementById('img-input').value = '';
+}
+function openImg(src) {
+  const w = window.open();
+  w.document.write(`<img src="${src}" style="max-width:100%">`);
+}
+// Drag & drop
+const chatArea = document.getElementById('chat-area');
+chatArea.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
+chatArea.addEventListener('dragleave', () => document.getElementById('drop-overlay').classList.remove('active'));
+chatArea.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('drop-overlay').classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const fakeInput = { files: [file] };
+    handleImageSelect(fakeInput);
+  }
+});
+
+// ─── REACTIONS ────────────────────────────────────────────────────────────────
+const EMOJIS = ['👍','❤️','😂','😮','😢','🔥','👏','🤔'];
+function addReaction(msgId) {
+  const picker = document.createElement('div');
+  picker.style.cssText = 'position:fixed;background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:8px;display:flex;gap:6px;z-index:1000;box-shadow:var(--shadow);flex-wrap:wrap;max-width:200px';
+  EMOJIS.forEach(e => {
+    const btn = document.createElement('button');
+    btn.textContent = e;
+    btn.style.cssText = 'border:none;background:none;cursor:pointer;font-size:20px;padding:4px;border-radius:6px';
+    btn.onclick = () => { toggleReaction(msgId, e); picker.remove(); };
+    picker.appendChild(btn);
+  });
+  const el = document.getElementById(`msg-${msgId}`);
+  if (el) {
+    const rect = el.getBoundingClientRect();
+    picker.style.top = (rect.bottom + 4) + 'px';
+    picker.style.left = rect.left + 'px';
+  }
+  document.body.appendChild(picker);
+  setTimeout(() => document.addEventListener('click', () => picker.remove(), { once: true }), 50);
+}
+function toggleReaction(msgId, emoji) {
+  socket.emit('react_message', { room_id: currentRoom, msg_id: msgId, emoji });
+}
+
+// ─── MEMBERS PANEL ────────────────────────────────────────────────────────────
+function updateMembersPanel(members) {
+  const list = document.getElementById('members-list');
+  document.getElementById('members-count').textContent = members.length;
+  updateRoomMeta(members.length);
+  if (!members.length) { list.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--text3)">Нет участников</div>'; return; }
+  const groups = { admin: [], moderator: [], owner: [], veteran: [], user: [], bot: [] };
+  members.forEach(m => {
+    const g = m.role || 'user';
+    (groups[g] || groups.user).push(m);
+  });
+  const order = ['admin', 'moderator', 'owner', 'veteran', 'user', 'bot'];
+  const labels = { admin: '👑 Администраторы', moderator: '🛡️ Модераторы', owner: '🏠 Владельцы', veteran: '🏆 Ветераны', user: '👤 Пользователи', bot: '🤖 Боты' };
+  let html = '';
+  order.forEach(role => {
+    if (!groups[role] || !groups[role].length) return;
+    html += `<div class="member-section"><div class="member-section-label">${labels[role]}</div>`;
+    groups[role].forEach(m => {
+      const cr = m.custom_role_data;
+      const color = cr ? cr.color : getRoleColor(m.role);
+      const emoji = cr ? (cr.emoji || '') : '';
+      const av = m.avatar ? `<img src="${m.avatar}" alt="">` : m.username.charAt(0).toUpperCase();
+      html += `<div class="member-item" onclick="openMemberMenu('${m.username}',event)" data-username="${m.username}">
+        <div class="member-avatar">${av}</div>
+        <div class="member-name" style="color:${color}">${emoji ? emoji + ' ' : ''}${escapeHtml(m.username)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+function toggleMembersPanel() {
+  const p = document.getElementById('members-panel');
+  p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+}
+
+// ─── CONTEXT MENU ─────────────────────────────────────────────────────────────
+function openMemberMenu(username, event) {
+  event && event.stopPropagation();
+  const menu = document.getElementById('context-menu');
+  const isOwner = currentRoomData && currentRoomData.owner === username;
+  const userData = allRooms; // we use socket request for actual data
+  let html = `<div style="padding:8px 12px;font-weight:600;font-size:14px;border-bottom:1.5px solid var(--border);margin-bottom:4px">${escapeHtml(username)}</div>`;
+  html += `<button class="tag-dropdown-item" onclick="openUserProfile('${username}')">👤 Просмотр профиля</button>`;
+  html += `<button class="tag-dropdown-item" onclick="openPM('${username}')">✉️ Личное сообщение</button>`;
+  html += `<button class="tag-dropdown-item" onclick="sendFriendRequest('${username}')">👥 Добавить в друзья</button>`;
+  if (canManageRoom() && username !== myUsername) {
+    html += `<button class="tag-dropdown-item" onclick="kickUser('${username}')">👢 Кик из комнаты</button>`;
+    html += `<button class="tag-dropdown-item" onclick="setSpamLimit('${username}')">🐌 Ограничить сообщения</button>`;
+    if (isRoomOwner()) html += `<button class="tag-dropdown-item" onclick="transferOwner('${username}')">🏠 Передать права владельца</button>`;
+  }
+  if (canAdmin() && username !== myUsername) {
+    html += `<div style="height:1px;background:var(--border);margin:4px 0"></div>`;
+    html += `<button class="tag-dropdown-item" style="color:var(--danger)" onclick="banUserFromMenu('${username}')">🚫 Забанить</button>`;
+  }
+  menu.innerHTML = html;
+  const x = Math.min(event ? event.clientX : 100, window.innerWidth - 200);
+  const y = Math.min(event ? event.clientY : 100, window.innerHeight - 200);
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 50);
+}
+function kickUser(username) {
+  const reason = prompt('Причина кика:') || 'Нет причины';
+  socket.emit('kick_user', { room_id: currentRoom, username, reason });
+}
+function setSpamLimit(username) {
+  const delay = parseInt(prompt('Задержка сообщений (сек):') || '0');
+  if (!isNaN(delay)) socket.emit('set_spam_limit', { room_id: currentRoom, username, delay });
+}
+function transferOwner(username) {
+  if (confirm(`Передать права владельца пользователю ${username}?`)) socket.emit('transfer_owner', { room_id: currentRoom, username });
+}
+function banUserFromMenu(username) {
+  const reason = prompt('Причина бана:') || 'Нет причины';
+  socket.emit('ban_user', { username, reason });
+}
+function openUserProfile(username) { socket.emit('get_profile', { username }); }
+
+// ─── VOICE CHAT (WebRTC) ──────────────────────────────────────────────────────
+async function startVoice() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setupAudioProcessing(localStream);
+    voiceConnected = true;
+    addVoiceCard(myUsername, true);
+    document.getElementById('mic-btn').classList.add('active');
+    // notify others
+    socket.emit('voice_joined', { room_id: currentRoom });
+  } catch(e) {
+    showNotif('Не удалось получить доступ к микрофону: ' + e.message, 'danger');
+  }
+}
+function setupAudioProcessing(stream) {
+  try {
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    gainNode = audioContext.createGain();
+    gainNode.gain.value = micVolume;
+    source.connect(gainNode);
+    if (noiseSuppression) {
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 100;
+      gainNode.connect(filter);
+      noiseFilter = filter;
+    }
+    // voice activity detection
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    gainNode.connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    setInterval(() => {
+      analyser.getByteFrequencyData(buf);
+      const avg = buf.reduce((a,b)=>a+b,0)/buf.length;
+      const card = document.querySelector(`[data-voice-user="${myUsername}"]`);
+      if (card) card.classList.toggle('speaking', avg > 20);
+    }, 100);
+  } catch(e) {}
+}
+async function createPeer(targetSid, isInitiator) {
+  const pc = new RTCPeerConnection({ iceServers });
+  peerConnections[targetSid] = pc;
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  pc.onicecandidate = e => { if (e.candidate) socket.emit('rtc_ice', { target: targetSid, candidate: e.candidate, room_id: currentRoom }); };
+  pc.ontrack = e => {
+    const username = peerSidMap[targetSid];
+    if (username) addRemoteAudio(targetSid, username, e.streams[0]);
+  };
+  if (isInitiator) {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('rtc_offer', { target: targetSid, offer, room_id: currentRoom });
+  }
+  return pc;
+}
+const peerSidMap = {};
+async function handleRtcOffer(data) {
+  peerSidMap[data.from] = data.username;
+  const pc = await createPeer(data.from, false);
+  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit('rtc_answer', { target: data.from, answer, room_id: currentRoom });
+}
+async function handleRtcAnswer(data) {
+  const pc = peerConnections[data.from];
+  if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+}
+async function handleRtcIce(data) {
+  const pc = peerConnections[data.from];
+  if (pc && data.candidate) await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+}
+function addRemoteAudio(sid, username, stream) {
+  let audio = document.getElementById(`audio-${sid}`);
+  if (!audio) {
+    audio = document.createElement('audio');
+    audio.id = `audio-${sid}`;
+    audio.autoplay = true;
+    document.body.appendChild(audio);
+  }
+  audio.srcObject = stream;
+  // attach to voice card volume control
+  const card = document.querySelector(`[data-voice-user="${username}"]`);
+  if (card) {
+    const slider = card.querySelector('.voice-vol-input');
+    if (slider) slider.addEventListener('input', e => { audio.volume = e.target.value / 100; });
+  }
+}
+function addVoiceCard(username, isLocal = false) {
+  const grid = document.getElementById('voice-grid');
+  if (document.querySelector(`[data-voice-user="${username}"]`)) return;
+  const color = getRoleColor(myRole);
+  const initials = username.charAt(0).toUpperCase();
+  const card = document.createElement('div');
+  card.className = 'voice-card';
+  card.dataset.voiceUser = username;
+  card.innerHTML = `
+    <div class="voice-avatar">${initials}</div>
+    <div class="voice-name">${escapeHtml(username)}${isLocal ? ' (вы)' : ''}</div>
+    <div class="voice-vol-control">
+      🔊 <input type="range" class="voice-vol-input" min="0" max="200" value="100" style="width:100%;height:3px;appearance:none;background:var(--border);border:none;border-radius:3px;padding:0" oninput="setParticipantVolume('${username}',this.value)" ${isLocal ? 'disabled' : ''}>
+    </div>
+  `;
+  grid.appendChild(card);
+  updateVoiceRoomMeta();
+}
+function removeVoiceCard(username) {
+  const card = document.querySelector(`[data-voice-user="${username}"]`);
+  if (card) card.remove();
+  // remove audio
+  const audioEl = document.getElementById(`audio-${username}`);
+  if (audioEl) audioEl.remove();
+  updateVoiceRoomMeta();
+}
+function updateVoiceRoomMeta() {
+  const count = document.querySelectorAll('.voice-card').length;
+  document.getElementById('voice-room-meta').textContent = `${count} участник${count===1?'':count<5?'а':'ов'}`;
+}
+function updateVoiceGrid(members) {
+  members.forEach(m => addVoiceCard(m.username));
+}
+function setParticipantVolume(username, val) {
+  const audios = document.querySelectorAll(`audio`);
+  // find by SID
+  for (const [sid, pc] of Object.entries(peerConnections)) {
+    if (peerSidMap[sid] === username) {
+      const audio = document.getElementById(`audio-${sid}`);
+      if (audio) audio.volume = val / 100;
+    }
+  }
+}
+function toggleMic() {
+  if (!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  const btn = document.getElementById('mic-btn');
+  btn.classList.toggle('muted', !track.enabled);
+  btn.textContent = track.enabled ? '🎙️ Микрофон' : '🔇 Заглушён';
+  socket.emit('voice_mute', { room_id: currentRoom, muted: !track.enabled });
+}
+function toggleSounds() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-ctrl-btn').textContent = soundEnabled ? '🔊 Звук' : '🔇 Звук откл.';
+}
+async function toggleScreenShare() {
+  const btn = document.getElementById('screen-btn');
+  if (screenStream) {
+    screenStream.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    btn.classList.remove('active');
+    btn.textContent = '📺 Трансляция';
+    socket.emit('screen_share_stop', { room_id: currentRoom });
+    // remove from peer connections
+    for (const pc of Object.values(peerConnections)) {
+      const senders = pc.getSenders().filter(s => s.track && s.track.kind === 'video');
+      senders.forEach(s => pc.removeTrack(s));
+    }
+    return;
+  }
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    btn.classList.add('active');
+    btn.textContent = '📺 Стоп';
+    // add to all peer connections
+    for (const pc of Object.values(peerConnections)) {
+      screenStream.getTracks().forEach(t => pc.addTrack(t, screenStream));
+    }
+    screenStream.getVideoTracks()[0].onended = () => toggleScreenShare();
+    socket.emit('screen_share_start', { room_id: currentRoom });
+    showLocalScreen(screenStream);
+  } catch(e) {
+    showNotif('Не удалось начать трансляцию: ' + e.message, 'warning');
+  }
+}
+function showLocalScreen(stream) {
+  const win = document.getElementById('screen-window');
+  const video = document.getElementById('screen-video');
+  video.srcObject = stream;
+  win.style.display = 'flex';
+  win.style.right = '20px';
+  win.style.bottom = '100px';
+  win.style.width = '400px';
+  win.style.height = '280px';
+  document.getElementById('screen-window-title').textContent = `Моя трансляция — ${myUsername}`;
+  makeDraggable(win);
+}
+function closeScreenWindow() {
+  const win = document.getElementById('screen-window');
+  win.style.display = 'none';
+  document.getElementById('screen-video').srcObject = null;
+}
+function showRemoteScreen(stream, username) {
+  const existingId = `screen-win-${username}`;
+  let win = document.getElementById(existingId);
+  if (!win) {
+    win = document.createElement('div');
+    win.id = existingId;
+    win.className = 'screen-window visible';
+    win.style.cssText = `right:20px;bottom:20px;width:400px;height:280px;position:fixed;background:var(--bg2);border:2px solid var(--accent);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;z-index:500;display:flex;flex-direction:column`;
+    win.innerHTML = `<div class="screen-window-header"><span>${escapeHtml(username)} — Трансляция</span><button class="icon-btn" style="width:24px;height:24px;font-size:12px" onclick="this.closest('[id]').remove()">✕</button></div><video autoplay playsinline style="flex:1;width:100%;background:#000"></video>`;
+    document.body.appendChild(win);
+    makeDraggable(win);
+  }
+  win.querySelector('video').srcObject = stream;
+}
+function makeDraggable(el) {
+  let ox, oy, startX, startY;
+  const header = el.querySelector('.screen-window-header');
+  if (!header) return;
+  header.style.cursor = 'move';
+  header.addEventListener('mousedown', e => {
+    ox = el.offsetLeft; oy = el.offsetTop;
+    startX = e.clientX; startY = e.clientY;
+    const move = ev => { el.style.left = (ox + ev.clientX - startX) + 'px'; el.style.top = (oy + ev.clientY - startY) + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto'; };
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+}
+function leaveVoiceRoom() {
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+  Object.values(peerConnections).forEach(pc => pc.close());
+  Object.keys(peerConnections).forEach(k => delete peerConnections[k]);
+  document.querySelectorAll('audio[id^="audio-"]').forEach(a => a.remove());
+  voiceConnected = false;
+  socket.emit('leave_room', { room_id: currentRoom });
+  currentRoom = null;
+  currentRoomData = null;
+  document.getElementById('voice-chat').style.display = 'none';
+  document.getElementById('chat-welcome').style.display = 'flex';
+  filterRooms(document.getElementById('room-search').value);
+}
+
+// mic settings
+async function loadMicDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const sel = document.getElementById('mic-device-select');
+    sel.innerHTML = devices.filter(d => d.kind === 'audioinput').map(d => `<option value="${d.deviceId}">${d.label || 'Микрофон ' + d.deviceId.slice(0,6)}</option>`).join('');
+  } catch(e) {}
+}
+async function changeMicDevice(deviceId) {
+  if (!voiceConnected) return;
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } });
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    localStream = newStream;
+    setupAudioProcessing(localStream);
+    for (const pc of Object.values(peerConnections)) {
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+      if (sender) sender.replaceTrack(localStream.getAudioTracks()[0]);
+    }
+  } catch(e) { showNotif('Не удалось сменить микрофон', 'danger'); }
+}
+function changeMicVolume(val) {
+  micVolume = val / 100;
+  if (gainNode) gainNode.gain.value = micVolume;
+  document.getElementById('mic-vol-label').textContent = val + '%';
+}
+function toggleNoiseSuppression() {
+  noiseSuppression = !noiseSuppression;
+  document.getElementById('tog-noise').classList.toggle('on', noiseSuppression);
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); startVoice(); }
+}
+
+// ─── DELETE ROOM ──────────────────────────────────────────────────────────────
+function confirmDeleteRoom() {
+  if (confirm(`Удалить комнату "${currentRoomData ? currentRoomData.name : ''}"?`)) {
+    socket.emit('delete_room', { room_id: currentRoom });
+  }
+}
+
+// ─── SEARCH MESSAGES ──────────────────────────────────────────────────────────
+function searchMessages(query) {
+  const area = document.getElementById('messages-area');
+  const results = document.getElementById('search-msg-results');
+  if (!query.trim()) { results.innerHTML = ''; return; }
+  const msgs = Array.from(area.querySelectorAll('.msg-row'));
+  const q = query.toLowerCase();
+  const found = msgs.filter(el => {
+    const t = el.querySelector('.msg-text');
+    const a = el.querySelector('.msg-author');
+    return (t && t.textContent.toLowerCase().includes(q)) || (a && a.textContent.toLowerCase().includes(q));
+  });
+  if (!found.length) { results.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">Ничего не найдено</div>'; return; }
+  results.innerHTML = found.slice(0, 20).map(el => {
+    const author = el.querySelector('.msg-author')?.textContent || '';
+    const text = el.querySelector('.msg-text')?.textContent || '';
+    const time = el.querySelector('.msg-time')?.textContent || '';
+    const id = el.id.replace('msg-', '');
+    return `<div class="tag-dropdown-item" onclick="jumpToMsg('${id}');closeModal('search-msg')">${escapeHtml(author)} <span style="color:var(--text3)">${time}</span><br><span style="font-size:12px">${escapeHtml(text.slice(0,80))}</span></div>`;
+  }).join('');
+}
+function jumpToMsg(id) {
+  const el = document.getElementById(`msg-${id}`);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.background = 'rgba(108,99,255,0.15)'; setTimeout(() => el.style.background = '', 2000); }
+}
+
+// ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+let lbData = [];
+function loadLeaderboard() { socket.emit('request_leaderboard'); }
+function loadLeaderboardData() { socket.emit('request_leaderboard'); }
+function switchLbTab(tab) {
+  lbTab = tab;
+  ['msgs','reactions','time'].forEach(t => {
+    const btn = document.getElementById(`lb-tab-${t}`);
+    if (btn) { btn.className = t === tab ? 'btn btn-primary' : 'btn btn-secondary'; }
+  });
+  renderLeaderboard();
+}
+function renderLeaderboard() {
+  const content = document.getElementById('leaderboard-content');
+  if (!lbData.length) { content.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3)">Данных пока нет</div>'; return; }
+  let sorted = [...lbData];
+  if (lbTab === 'msgs') sorted.sort((a,b) => b.total_msgs - a.total_msgs);
+  else if (lbTab === 'reactions') sorted.sort((a,b) => b.reactions_received - a.reactions_received);
+  else sorted.sort((a,b) => b.chat_time - a.chat_time);
+  const ranks = ['🥇','🥈','🥉'];
+  const rankClass = ['gold','silver','bronze'];
+  content.innerHTML = sorted.slice(0, 20).map((u, i) => {
+    const val = lbTab === 'msgs' ? `${u.total_msgs} сообщений` : lbTab === 'reactions' ? `${u.reactions_received} реакций` : formatTime(u.chat_time || 0);
+    const color = getRoleColor(u.role);
+    return `<div class="lb-row">
+      <div class="lb-rank ${rankClass[i]||''}">${ranks[i] || (i+1)}</div>
+      <div class="lb-info"><div class="lb-name" style="color:${color}">${escapeHtml(u.username)}</div><div class="lb-score">${val}</div></div>
+      <span class="badge-pill ${getRoleBadgeClass(u.role)}">${getRoleLabel(u.role)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── FRIENDS & PM ─────────────────────────────────────────────────────────────
+function loadFriends() { socket.emit('request_friends'); setTimeout(renderFriends, 300); }
+function renderFriends() {
+  const content = document.getElementById('friends-content');
+  if (frTab === 'list') {
+    if (!myFriends.length) { content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">Список друзей пуст</div>'; return; }
+    content.innerHTML = myFriends.map(f => `<div class="friend-item"><div class="member-avatar" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))">${f.charAt(0).toUpperCase()}</div><span style="flex:1;font-size:14px;font-weight:500">${escapeHtml(f)}</span><div class="friend-actions"><button class="btn btn-secondary" onclick="openPM('${f}')">✉️</button><button class="btn btn-danger" onclick="removeFriend('${f}')">✕</button></div></div>`).join('');
+  } else if (frTab === 'requests') {
+    if (!friendRequests.length) { content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">Нет входящих запросов</div>'; return; }
+    content.innerHTML = friendRequests.map(f => `<div class="friend-item"><span style="flex:1;font-size:14px">${escapeHtml(f)}</span><div class="friend-actions"><button class="btn btn-primary" onclick="respondFriend('${f}',true)">✓</button><button class="btn btn-danger" onclick="respondFriend('${f}',false)">✕</button></div></div>`).join('');
+  } else {
+    content.innerHTML = `<div style="padding:10px"><div class="modal-field"><label>Ник пользователя</label><input id="add-friend-input" type="text" placeholder="Введите ник..."></div><button class="btn btn-primary" onclick="sendFriendRequestFromInput()">Отправить запрос</button></div>`;
+  }
+}
+function switchFriendsTab(tab) {
+  frTab = tab;
+  ['list','requests','add'].forEach(t => { const b = document.getElementById(`fr-tab-${t}`); if (b) b.className = t === tab ? 'btn btn-primary' : 'btn btn-secondary'; });
+  renderFriends();
+}
+function sendFriendRequestFromInput() {
+  const nick = document.getElementById('add-friend-input').value.trim();
+  if (nick) sendFriendRequest(nick);
+}
+function sendFriendRequest(username) { socket.emit('friend_request', { to: username }); showNotif(`Запрос отправлен ${username}`, 'success'); }
+function respondFriend(username, accept) { socket.emit('friend_respond', { from: username, accept }); }
+function removeFriend(username) { socket.emit('remove_friend', { username }); }
+function openPM(username) {
+  pmTarget = username;
+  document.getElementById('pm-username').textContent = username;
+  document.getElementById('pm-messages').innerHTML = '';
+  socket.emit('request_pm_history', { with: username });
+  closeModal('friends');
+  openModal('private');
+}
+function sendPM() {
+  const inp = document.getElementById('pm-input');
+  const text = inp.value.trim();
+  if (!text || !pmTarget) return;
+  socket.emit('send_pm', { to: pmTarget, text });
+  inp.value = '';
+}
+function renderPMMessage(m, isMe) {
+  const area = document.getElementById('pm-messages');
+  const div = document.createElement('div');
+  div.style.cssText = `text-align:${isMe ? 'right' : 'left'};margin-bottom:8px`;
+  div.innerHTML = `<div style="display:inline-block;background:${isMe ? 'var(--accent)' : 'var(--bg3)'};color:${isMe ? '#fff' : 'var(--text)'};padding:8px 12px;border-radius:12px;max-width:80%;font-size:14px;word-break:break-word">${escapeHtml(m.text)}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${m.timestamp||''}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ─── PROFILE ──────────────────────────────────────────────────────────────────
+function loadProfile() {
+  socket.emit('get_profile', { username: myUsername });
+  document.getElementById('profile-content').style.display = 'flex';
+  document.getElementById('edit-profile-form').style.display = 'none';
+  document.getElementById('profile-main-actions').style.display = 'flex';
+}
+function openEditProfile() {
+  document.getElementById('profile-content').style.display = 'none';
+  document.getElementById('edit-profile-form').style.display = 'block';
+  document.getElementById('profile-main-actions').style.display = 'none';
+}
+function cancelEditProfile() {
+  document.getElementById('profile-content').style.display = 'flex';
+  document.getElementById('edit-profile-form').style.display = 'none';
+  document.getElementById('profile-main-actions').style.display = 'flex';
+}
+function previewAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showNotif('Аватарка должна быть менее 2МБ', 'danger'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('avatar-preview-area').innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;border-radius:14px;object-fit:cover">`;
+    document.getElementById('avatar-preview-area').dataset.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function saveProfile() {
+  const bio = document.getElementById('bio-input').value;
+  const avatar = document.getElementById('avatar-preview-area').dataset.src;
+  socket.emit('update_profile', { bio, avatar });
+  cancelEditProfile();
+  showNotif('Профиль обновлён', 'success');
+}
+function renderProfile(data) {
+  document.getElementById('profile-username').textContent = data.username;
+  const cr = data.custom_role_data;
+  const color = cr ? cr.color : getRoleColor(data.role);
+  document.getElementById('profile-username').style.color = color;
+  document.getElementById('profile-role').textContent = cr ? `${cr.emoji||''} ${cr.name}` : getRoleLabel(data.role);
+  document.getElementById('profile-bio').textContent = data.bio || 'Нет описания';
+  document.getElementById('profile-msgs').textContent = data.total_msgs || 0;
+  document.getElementById('profile-reactions').textContent = data.reactions_received || 0;
+  document.getElementById('profile-time').textContent = formatTime(data.chat_time || 0);
+  const av = document.getElementById('profile-avatar');
+  if (data.avatar) av.innerHTML = `<img src="${data.avatar}" alt="">`;
+  else av.textContent = data.username.charAt(0).toUpperCase();
+  document.getElementById('bio-input').value = data.bio || '';
+}
+
+// ─── CUSTOM ROLES ─────────────────────────────────────────────────────────────
+function loadRoles() { socket.emit('request_roles'); }
+function createCustomRole() {
+  const name = document.getElementById('role-name-input').value.trim();
+  const color = document.getElementById('role-color-input').value;
+  const emoji = document.getElementById('role-emoji-input').value.trim();
+  const prefix = document.getElementById('role-prefix-input').value.trim();
+  if (!name) { showNotif('Введите название роли', 'warning'); return; }
+  socket.emit('create_role', { name, color, emoji, prefix });
+  document.getElementById('role-name-input').value = '';
+  document.getElementById('role-emoji-input').value = '';
+  document.getElementById('role-prefix-input').value = '';
+}
+function deleteRole(name) { if (confirm(`Удалить роль "${name}"?`)) socket.emit('delete_role', { name }); }
+function assignCustomRole() {
+  const username = document.getElementById('assign-role-user').value.trim();
+  const role = document.getElementById('assign-role-select').value;
+  if (!username) { showNotif('Введите ник пользователя', 'warning'); return; }
+  socket.emit('assign_role', { username, role_name: role });
+}
+function renderRoles(roles) {
+  const list = document.getElementById('roles-list');
+  const sel = document.getElementById('assign-role-select');
+  if (!roles || !roles.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3)">Нет кастомных ролей</div>';
+    sel.innerHTML = '<option value="">— Снять роль —</option>';
+    return;
+  }
+  list.innerHTML = roles.map(r => `<div class="role-item"><div class="role-color-dot" style="background:${r.color}"></div><span style="color:${r.color};font-weight:600;flex:1">${r.emoji||''} ${r.prefix ? r.prefix + ' ' : ''}${escapeHtml(r.name)}</span><button class="btn btn-danger" style="padding:4px 10px;font-size:12px" onclick="deleteRole('${escapeHtml(r.name)}')">Удалить</button></div>`).join('');
+  sel.innerHTML = '<option value="">— Снять роль —</option>' + roles.map(r => `<option value="${escapeHtml(r.name)}">${r.emoji||''} ${escapeHtml(r.name)}</option>`).join('');
+}
+
+// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
+function openAdminPanel() {
+  if (myRole !== 'admin') {
+    openModal('admin-code');
+    return;
+  }
+  document.getElementById('admin-panel').classList.add('open');
+  loadAdminData();
+}
+function closeAdminPanel() { document.getElementById('admin-panel').classList.remove('open'); }
+function submitAdminCode() {
+  const code = document.getElementById('admin-code-input').value;
+  if (!code) return;
+  socket.emit('admin_code', { code });
+}
+function switchAdminTab(tab) {
+  adminTab = tab;
+  document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`atab-${tab}`).classList.add('active');
+  document.getElementById(`acontent-${tab}`).classList.add('active');
+  if (tab === 'users') renderAdminUsers('');
+  if (tab === 'rooms') renderAdminRooms();
+  if (tab === 'mods') renderMods();
+  if (tab === 'bans') renderBans();
+  if (tab === 'log') socket.emit('request_action_log');
+}
+function loadAdminData() {
+  socket.emit('admin_request_all_users');
+  socket.emit('admin_request_stats');
+  socket.emit('admin_request_all_rooms');
+  socket.emit('request_action_log');
+}
+function filterAdminUsers(q) { renderAdminUsers(q); }
+function renderAdminUsers(query) {
+  const q = query.toLowerCase();
+  const tbody = document.getElementById('admin-users-tbody');
+  const users = allUsersData.filter(u => !q || u.username.toLowerCase().includes(q));
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Пусто</td></tr>'; return; }
+  tbody.innerHTML = users.map(u => `<tr>
+    <td style="font-weight:600">${escapeHtml(u.username)}</td>
+    <td><span class="badge-pill ${getRoleBadgeClass(u.role)}">${getRoleLabel(u.role)}</span></td>
+    <td>${u.total_msgs || 0}</td>
+    <td><div class="admin-table-actions">
+      ${u.role !== 'moderator' && u.role !== 'admin' ? `<button class="btn btn-secondary" style="font-size:12px;padding:4px 8px" onclick="setMod('${u.username}',true)">+Мод</button>` : `<button class="btn btn-secondary" style="font-size:12px;padding:4px 8px" onclick="setMod('${u.username}',false)">-Мод</button>`}
+      ${u.banned ? `<button class="btn btn-secondary" style="font-size:12px;padding:4px 8px" onclick="unbanUserAdmin('${u.username}')">Разбан</button>` : `<button class="btn btn-danger" style="font-size:12px;padding:4px 8px" onclick="banUserAdmin('${u.username}')">Бан</button>`}
+    </div></td>
+  </tr>`).join('');
+}
+function renderAdminRooms() {
+  const tbody = document.getElementById('admin-rooms-tbody');
+  if (!allRoomsAdmin.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">Пусто</td></tr>'; return; }
+  tbody.innerHTML = allRoomsAdmin.map(r => `<tr>
+    <td><b>${escapeHtml(r.name)}</b>${r.is_hidden ? ' 👁' : ''}${r.pinned ? ' 📌' : ''}</td>
+    <td>${r.is_voice ? '🎙️' : r.is_anonymous ? '🥷' : r.is_bot_room ? '🤖' : '💬'}</td>
+    <td>${escapeHtml(r.owner || '')}</td>
+    <td>${r.members_count || 0}</td>
+    <td><div class="admin-table-actions">
+      <button class="btn btn-secondary" style="font-size:12px;padding:4px 8px" onclick="adminEnterRoom('${r.id}')">Войти</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:4px 8px" onclick="pinRoomAdmin('${r.id}',${!r.pinned})">${r.pinned ? '▼' : '📌'}</button>
+      <button class="btn btn-danger" style="font-size:12px;padding:4px 8px" onclick="adminDeleteRoom('${r.id}')">Удалить</button>
+    </div></td>
+  </tr>`).join('');
+}
+function renderMods() {
+  const list = document.getElementById('mods-list');
+  const mods = allUsersData.filter(u => u.role === 'moderator');
+  if (!mods.length) { list.innerHTML = '<div style="padding:10px;color:var(--text3)">Нет модераторов</div>'; return; }
+  list.innerHTML = mods.map(m => `<div class="friend-item"><span style="flex:1">${escapeHtml(m.username)}</span><button class="btn btn-danger" style="font-size:12px;padding:4px 10px" onclick="setMod('${m.username}',false)">Снять</button></div>`).join('');
+}
+function renderBans() {
+  const list = document.getElementById('bans-list');
+  const banned = allUsersData.filter(u => u.banned);
+  if (!banned.length) { list.innerHTML = '<div style="padding:10px;color:var(--text3)">Нет заблокированных</div>'; return; }
+  list.innerHTML = banned.map(u => `<div class="friend-item"><span style="flex:1">${escapeHtml(u.username)}</span><button class="btn btn-secondary" style="font-size:12px;padding:4px 10px" onclick="unbanUserAdmin('${u.username}')">Разбан</button></div>`).join('');
+}
+function setMod(username, add) { socket.emit('set_moderator', { username, add }); }
+function banUser(username) { if (!username) return; const r = prompt('Причина:') || ''; socket.emit('ban_user', { username, reason: r }); }
+function banUserAdmin(username) { const r = prompt('Причина:') || ''; socket.emit('ban_user', { username, reason: r }); }
+function unbanUserAdmin(username) { socket.emit('unban_user', { username }); }
+function addModerator() { const u = document.getElementById('new-mod-input').value.trim(); if (u) { setMod(u, true); document.getElementById('new-mod-input').value = ''; } }
+function adminEnterRoom(roomId) { socket.emit('join_room', { room_id: roomId, password: '', admin_override: true }); closeAdminPanel(); }
+function adminDeleteRoom(roomId) { if (confirm('Удалить комнату?')) socket.emit('delete_room', { room_id: roomId }); }
+function pinRoomAdmin(roomId, pin) { socket.emit('pin_room', { room_id: roomId, pin }); }
+function setGlobalAnnouncement() { socket.emit('set_global_announcement', { text: document.getElementById('global-announce-input').value }); showNotif('Объявление установлено', 'success'); }
+function setGlobalJoinMsg() { socket.emit('set_global_join_msg', { text: document.getElementById('global-joinmsg-input').value }); showNotif('Сообщение входа установлено', 'success'); }
+function setRoomJoinMsg() {
+  const room = document.getElementById('room-joinmsg-room').value.trim();
+  const msg = document.getElementById('room-joinmsg-input').value;
+  if (!room) { showNotif('Введите название комнаты', 'warning'); return; }
+  socket.emit('set_room_join_msg', { room_name: room, text: msg });
+  showNotif('Сообщение для комнаты установлено', 'success');
+}
+function toggleObserver() {
+  isObserver = !isObserver;
+  socket.emit('set_observer', { active: isObserver });
+  document.getElementById('observer-toggle-btn').textContent = isObserver ? 'Деактивировать режим наблюдателя' : 'Активировать режим наблюдателя';
+  document.getElementById('observer-status').textContent = isObserver ? '👁️ Режим наблюдателя активен. Вы невидимы.' : '';
+}
+
+// ─── PYTHON EMBED (Pyodide) ───────────────────────────────────────────────────
+async function initPyodide() {
+  if (pyodideReady || pyodide) return;
+  const btn = document.getElementById('run-py-btn');
+  btn.textContent = '⏳ Загрузка Pyodide...';
+  btn.disabled = true;
+  try {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+    document.head.appendChild(script);
+    await new Promise(r => script.onload = r);
+    pyodide = await loadPyodide();
+    pyodideReady = true;
+    btn.textContent = '▶ Запустить';
+    btn.disabled = false;
+    // inject API
+    window.vietugram_api = {
+      send_message: (text) => { if (currentRoom) socket.emit('send_message', { room_id: currentRoom, text }); },
+      get_room: () => currentRoomData ? currentRoomData.name : null,
+      get_username: () => myUsername,
+    };
+    pyodide.runPython(`
+import js
+class Vietugram:
+    def send_message(self, text): js.vietugram_api.send_message(text)
+    def get_room(self): return js.vietugram_api.get_room()
+    def get_username(self): return js.vietugram_api.get_username()
+vietugram = Vietugram()
+    `);
+  } catch(e) {
+    btn.textContent = '▶ Запустить';
+    btn.disabled = false;
+    showNotif('Не удалось загрузить Pyodide: ' + e.message, 'danger');
+  }
+}
+async function runPyCode() {
+  if (!pyodideReady) { await initPyodide(); if (!pyodideReady) return; }
+  const code = document.getElementById('py-code').value;
+  const out = document.getElementById('py-output');
+  out.textContent = '';
+  let output = '';
+  pyodide.setStdout({ batched: s => { output += s + '\n'; out.textContent = output; } });
+  pyodide.setStderr({ batched: s => { output += '⚠️ ' + s + '\n'; out.textContent = output; } });
+  try {
+    await pyodide.runPythonAsync(code);
+  } catch(e) {
+    out.textContent += '\n❌ Ошибка: ' + e.message;
+    out.style.color = 'var(--danger)';
+    setTimeout(() => out.style.color = 'var(--success)', 2000);
+  }
+}
+function savePyScript() {
+  const code = document.getElementById('py-code').value;
+  const name = prompt('Название скрипта:');
+  if (!name) return;
+  const scripts = JSON.parse(localStorage.getItem('py_scripts') || '{}');
+  scripts[name] = code;
+  localStorage.setItem('py_scripts', JSON.stringify(scripts));
+  loadSavedScripts();
+  showNotif(`Скрипт "${name}" сохранён`, 'success');
+}
+function loadSavedScripts() {
+  const scripts = JSON.parse(localStorage.getItem('py_scripts') || '{}');
+  const sel = document.getElementById('saved-scripts');
+  sel.innerHTML = '<option value="">— Новый скрипт —</option>' + Object.keys(scripts).map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+}
+function loadSavedScript(name) {
+  if (!name) return;
+  const scripts = JSON.parse(localStorage.getItem('py_scripts') || '{}');
+  if (scripts[name]) document.getElementById('py-code').value = scripts[name];
+}
+
+// ─── SOCKET EVENTS ────────────────────────────────────────────────────────────
+socket.on('connect', () => {
+  setStatus('connected', 'Подключено');
+  autoLogin();
+});
+socket.on('disconnect', () => setStatus('disconnected', 'Нет соединения'));
+socket.on('reconnecting', () => setStatus('reconnecting', 'Переподключение...'));
+socket.on('reconnect', () => {
+  setStatus('connected', 'Подключено');
+  if (myUsername && myToken) socket.emit('autologin', { username: myUsername, token: myToken });
+});
+
+socket.on('auth_success', onAuthSuccess);
+socket.on('login_error', data => {
+  const err = document.getElementById('login-err');
+  err.textContent = data.message || 'Ошибка входа';
+  err.style.display = '';
+});
+socket.on('register_error', data => {
+  const err = document.getElementById('reg-err');
+  err.textContent = data.message || 'Ошибка регистрации';
+  err.style.display = '';
+});
+
+socket.on('rooms_list', buildRoomsList);
+
+socket.on('room_joined', onRoomJoined);
+socket.on('room_join_error', data => {
+  document.getElementById('pass-err').textContent = data.message || 'Ошибка входа';
+  document.getElementById('pass-err').style.display = '';
+  document.getElementById('connect-err').textContent = data.message || 'Комната не найдена';
+  document.getElementById('connect-err').style.display = '';
+  showNotif(data.message || 'Ошибка входа в комнату', 'danger');
+});
+
+socket.on('message', m => {
+  if (m.room_id !== currentRoom) {
+    unreadCounts[m.room_id] = (unreadCounts[m.room_id] || 0) + 1;
+    filterRooms(document.getElementById('room-search').value);
+    return;
+  }
+  renderMessage(m);
+  // store raw text for editing
+  const el = document.getElementById(`msg-${m.id}`);
+  if (el) el.dataset.rawText = m.text;
+});
+
+socket.on('message_edited', data => {
+  const el = document.getElementById(`msg-${data.msg_id}`);
+  if (!el) return;
+  const textEl = el.querySelector('.msg-text');
+  if (textEl) textEl.innerHTML = formatMsgText(data.text);
+  let editedEl = el.querySelector('.msg-edited');
+  if (!editedEl) {
+    const header = el.querySelector('.msg-header');
+    editedEl = document.createElement('span');
+    editedEl.className = 'msg-edited';
+    header.appendChild(editedEl);
+  }
+  editedEl.textContent = '(изменено)';
+  el.dataset.rawText = data.text;
+});
+
+socket.on('message_deleted', data => {
+  const el = document.getElementById(`msg-${data.msg_id}`);
+  if (el) {
+    const body = el.querySelector('.msg-body');
+    if (body) { const t = body.querySelector('.msg-text, .msg-announcement'); if (t) t.remove(); body.insertAdjacentHTML('beforeend', '<div class="msg-deleted">🚫 Сообщение удалено</div>'); }
+    const actions = el.querySelector('.msg-actions');
+    if (actions) actions.innerHTML = '';
+  }
+});
+
+socket.on('message_pinned', data => { if (data.room_id === currentRoom) { showPinnedBar(data.msg); document.getElementById('pin-goto-btn').style.display = ''; if (currentRoomData) currentRoomData.pinned_msg = data.msg; } });
+socket.on('message_unpinned', data => { if (data.room_id === currentRoom) { hidePinnedBar(); if (currentRoomData) currentRoomData.pinned_msg = null; } });
+
+socket.on('reaction_updated', data => {
+  if (data.room_id !== currentRoom) return;
+  const el = document.getElementById(`msg-${data.msg_id}`);
+  if (!el) return;
+  let bar = el.querySelector('.reactions-bar');
+  if (!bar) {
+    const body = el.querySelector('.msg-body');
+    bar = document.createElement('div');
+    bar.className = 'reactions-bar';
+    body.appendChild(bar);
+  }
+  bar.innerHTML = Object.entries(data.reactions).map(([emoji, users]) => {
+    const mine = users.includes(myUsername);
+    return `<button class="reaction-btn ${mine?'mine':''}" onclick="toggleReaction('${data.msg_id}','${emoji}')">${emoji}<span class="cnt">${users.length}</span></button>`;
+  }).join('');
+});
+
+socket.on('members_update', data => {
+  if (data.room_id !== currentRoom) return;
+  updateMembersPanel(data.members);
+  if (currentRoomData && !currentRoomData.is_voice) updateRoomMeta(data.members.length);
+});
+
+socket.on('voice_member_joined', data => { if (data.room_id === currentRoom) addVoiceCard(data.username); });
+socket.on('voice_member_left', data => { if (data.room_id === currentRoom) removeVoiceCard(data.username); });
+socket.on('voice_mute_update', data => {
+  if (data.room_id !== currentRoom) return;
+  const card = document.querySelector(`[data-voice-user="${data.username}"]`);
+  if (card) {
+    card.classList.toggle('muted-card', data.muted);
+    let muteIcon = card.querySelector('.voice-mute-icon');
+    if (data.muted && !muteIcon) {
+      const av = card.querySelector('.voice-avatar');
+      if (av) av.insertAdjacentHTML('beforeend', '<div class="voice-mute-icon">🔇</div>');
+    } else if (!data.muted && muteIcon) muteIcon.remove();
+  }
+});
+
+socket.on('rtc_new_user', async data => {
+  if (data.room_id !== currentRoom) return;
+  peerSidMap[data.sid] = data.username;
+  addVoiceCard(data.username);
+  await createPeer(data.sid, true);
+});
+socket.on('rtc_offer', handleRtcOffer);
+socket.on('rtc_answer', handleRtcAnswer);
+socket.on('rtc_ice', handleRtcIce);
+
+socket.on('screen_share_started', data => {
+  if (data.room_id !== currentRoom || data.username === myUsername) return;
+  const card = document.querySelector(`[data-voice-user="${data.username}"]`);
+  if (card && !card.querySelector('.screen-badge')) {
+    card.insertAdjacentHTML('beforeend', `<div class="screen-badge" onclick="watchScreen('${data.username}')">📺 Трансляция</div>`);
+  }
+});
+socket.on('screen_share_stopped', data => {
+  if (data.room_id !== currentRoom) return;
+  const card = document.querySelector(`[data-voice-user="${data.username}"]`);
+  const badge = card ? card.querySelector('.screen-badge') : null;
+  if (badge) badge.remove();
+  const win = document.getElementById(`screen-win-${data.username}`);
+  if (win) win.remove();
+});
+
+socket.on('room_deleted', data => {
+  if (data.room_id === currentRoom) {
+    currentRoom = null; currentRoomData = null;
+    document.getElementById('text-chat').style.display = 'none';
+    document.getElementById('voice-chat').style.display = 'none';
+    document.getElementById('chat-welcome').style.display = 'flex';
+    showNotif('Комната была удалена: ' + (data.reason || ''), 'warning');
+  }
+  filterRooms(document.getElementById('room-search').value);
+});
+
+socket.on('kicked', data => {
+  currentRoom = null; currentRoomData = null;
+  document.getElementById('text-chat').style.display = 'none';
+  document.getElementById('voice-chat').style.display = 'none';
+  document.getElementById('chat-welcome').style.display = 'flex';
+  showNotif(`Вы были кикнуты: ${data.reason || ''}`, 'danger');
+});
+
+socket.on('banned', () => {
+  showNotif('Вы были заблокированы', 'danger');
+  setTimeout(() => location.reload(), 2000);
+});
+
+socket.on('role_updated', data => {
+  if (data.username === myUsername) {
+    myRole = data.role;
+    updateUserBadge(data);
+    if (canModerate()) document.getElementById('roles-btn').style.display = '';
+    if (myRole === 'admin') document.getElementById('admin-btn').style.display = '';
+    showNotif(`Ваша роль изменена: ${getRoleLabel(data.role)}`, 'success');
+  }
+  renderAdminUsers('');
+  renderMods();
+});
+
+socket.on('admin_access_granted', data => {
+  closeModal('admin-code');
+  myRole = 'admin';
+  updateUserBadge(data);
+  document.getElementById('roles-btn').style.display = '';
+  document.getElementById('admin-panel').classList.add('open');
+  loadAdminData();
+  showNotif('Доступ администратора получен!', 'success');
+});
+socket.on('admin_code_error', () => {
+  document.getElementById('admin-code-err').textContent = 'Неверный код';
+  document.getElementById('admin-code-err').style.display = '';
+});
+
+socket.on('admin_users_data', data => {
+  allUsersData = data.users || [];
+  renderAdminUsers(document.getElementById('admin-user-search') ? document.getElementById('admin-user-search').value : '');
+  renderMods();
+  renderBans();
+});
+socket.on('admin_rooms_data', data => {
+  allRoomsAdmin = data.rooms || [];
+  renderAdminRooms();
+});
+socket.on('admin_stats', data => {
+  if (data.users !== undefined) document.getElementById('stat-users').textContent = data.users;
+  if (data.rooms !== undefined) document.getElementById('stat-rooms').textContent = data.rooms;
+  if (data.messages !== undefined) document.getElementById('stat-msgs').textContent = data.messages;
+  if (data.online !== undefined) document.getElementById('stat-online').textContent = data.online;
+});
+
+socket.on('leaderboard_data', data => {
+  lbData = data.users || [];
+  renderLeaderboard();
+});
+
+socket.on('profile_data', data => {
+  renderProfile(data);
+  if (!document.getElementById('modal-profile').classList.contains('open')) openModal('profile');
+});
+
+socket.on('friends_data', data => {
+  myFriends = data.friends || [];
+  friendRequests = data.requests || [];
+  renderFriends();
+});
+socket.on('friend_request_received', data => {
+  friendRequests.push(data.from);
+  showNotif(`${data.from} хочет добавить вас в друзья`, 'info');
+  if (soundEnabled) playBeep(660);
+});
+socket.on('friend_accepted', data => {
+  if (!myFriends.includes(data.username)) myFriends.push(data.username);
+  showNotif(`${data.username} принял запрос в друзья`, 'success');
+});
+
+socket.on('pm_history', data => {
+  const area = document.getElementById('pm-messages');
+  if (!area) return;
+  area.innerHTML = '';
+  (data.messages || []).forEach(m => renderPMMessage(m, m.author === myUsername));
+});
+socket.on('pm_message', data => {
+  if (data.from !== pmTarget && data.to !== pmTarget) return;
+  const isMe = data.author === myUsername;
+  renderPMMessage(data, isMe);
+  if (!isMe && !document.getElementById('modal-private').classList.contains('open')) {
+    showNotif(`Личное сообщение от ${data.from}`, 'info');
+    if (soundEnabled) playBeep(880);
+  }
+});
+
+socket.on('roles_data', data => renderRoles(data.roles || []));
+socket.on('role_created', data => { showNotif(`Роль "${data.name}" создана`, 'success'); loadRoles(); });
+socket.on('role_deleted', () => { showNotif('Роль удалена', 'success'); loadRoles(); });
+socket.on('role_assigned', data => { showNotif(`Роль назначена ${data.username}`, 'success'); socket.emit('admin_request_all_users'); });
+
+socket.on('global_announcement', data => {
+  const bar = document.getElementById('announcement-bar');
+  if (data.text) {
+    bar.style.display = 'flex';
+    document.getElementById('announcement-text').textContent = data.text;
+  } else {
+    bar.style.display = 'none';
+  }
+  if (document.getElementById('global-announce-input')) document.getElementById('global-announce-input').value = data.text || '';
+});
+
+socket.on('action_log', data => {
+  const list = document.getElementById('action-log-list');
+  if (!list) return;
+  const entries = data.entries || [];
+  list.innerHTML = entries.length
+    ? entries.map(e => `<div style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">${e.time}</span> <b>${escapeHtml(e.actor)}</b> — ${escapeHtml(e.action)}</div>`).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--text3)">Лог пуст</div>';
+});
+
+socket.on('observer_updated', data => {
+  isObserver = data.active;
+  const btn = document.getElementById('observer-toggle-btn');
+  if (btn) btn.textContent = isObserver ? 'Деактивировать режим наблюдателя' : 'Активировать режим наблюдателя';
+  const st = document.getElementById('observer-status');
+  if (st) st.textContent = isObserver ? '👁️ Режим наблюдателя активен. Вы невидимы.' : '';
+});
+
+socket.on('connect_by_name_error', data => showNotif(data.message || 'Комната не найдена', 'danger'));
+socket.on('room_needs_password', data => {
+  pendingRoomId = data.room_id;
+  document.getElementById('room-password-input').value = '';
+  document.getElementById('pass-err').style.display = 'none';
+  openModal('password');
+});
+socket.on('notification', data => showNotif(data.message, data.type || 'info'));
+
+// Update rooms list filter when admin status changes
+socket.on('auth_success', () => {
+  filterRooms(document.getElementById('room-search').value);
+});
+
+// ─── RESPONSIVE ───────────────────────────────────────────────────────────────
+function checkMobile() {
+  const isMobile = window.innerWidth <= 768;
+  const toggle = document.getElementById('sidebar-toggle-btn');
+  if (toggle) toggle.style.display = isMobile ? '' : 'none';
+  const topbarBtns = document.querySelectorAll('.topbar-btn.hide-mobile');
+  topbarBtns.forEach(b => b.style.display = isMobile ? 'none' : '');
+}
+window.addEventListener('resize', checkMobile);
+checkMobile();
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+initTheme();
+loadSavedScripts();
+document.getElementById('run-py-btn').onclick = async () => {
+  if (!pyodideReady) {
+    await initPyodide();
+    if (pyodideReady) await runPyCode();
+  } else {
+    await runPyCode();
+  }
+};
+
+// keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    document.getElementById('context-menu').style.display = 'none';
+    cancelEdit();
+  }
+});
+</script>
+</body>
+</html>
